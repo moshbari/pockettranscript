@@ -119,10 +119,18 @@ function paintJobs(jobs) {
 
     const icon = { queued: '⏳', working: '⚙️', done: '✅', error: '⚠️' }[j.status] || '•';
     const label = j.title || j.url.replace(/^https?:\/\/(www\.)?/, '');
+    // With a 7-day window, age is the useful thing to show — it says what's
+    // about to disappear without needing a countdown on every row.
+    const age = Date.now() - j.createdAt;
+    const day = 86400000;
+    const when = age < day ? 'today'
+      : age < 2 * day ? 'yesterday'
+      : `${Math.floor(age / day)} days ago`;
+
     const sub = {
       queued:  'Waiting for your computer…',
       working: 'Your computer is grabbing it…',
-      done:    `${j.words.toLocaleString()} words · tap to read`,
+      done:    `${j.words.toLocaleString()} words · ${when}`,
       error:   j.error,
     }[j.status] || '';
 

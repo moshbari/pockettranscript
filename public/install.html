@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0f14">
+<title>Set up PocketTranscript</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/install.css">
+</head>
+<body>
+
+<header class="bar">
+  <div class="brand"><span class="logo">▶</span><span>Setup guide</span></div>
+  <a class="pill" href="/">Back to app</a>
+</header>
+
+<main class="screen">
+
+  <div class="card intro">
+    <h1>Connect your computer</h1>
+    <p>PocketTranscript doesn't grab transcripts by itself — <b>your computer does the work</b> and sends the result to your phone. So there's a one-time setup on the computer. About three minutes.</p>
+  </div>
+
+  <div class="callout">
+    <div class="callout-icon">🖥️</div>
+    <div>
+      <div class="callout-title">Steps 1–5 are on your computer</div>
+      <div class="callout-body">Chrome extensions can only be installed on a desktop or laptop — phones can't run them at all. Read this on your phone if you like, then do it at the computer. Step 6 comes back to your phone.</div>
+    </div>
+  </div>
+
+  <!-- STEP 1 ------------------------------------------------------------ -->
+  <section class="step">
+    <div class="step-head"><span class="step-num">1</span><h2>Download the extension</h2></div>
+    <p>On your computer, open this page and tap the button.</p>
+    <a class="btn btn-primary btn-lg" id="dlBtn"
+       href="https://github.com/moshbari/youtube-transcript-extension/releases/latest/download/youtube-transcript-extension.zip">
+       ⬇︎ Download the extension
+    </a>
+    <p class="muted">You'll get a <b>.zip</b> file. If your computer didn't unzip it for you, double-click it. You should end up with a <b>folder</b> of files — that folder is what Chrome needs.</p>
+
+    <details class="aside">
+      <summary>Is it in the Chrome Web Store?</summary>
+      <p>It is, but the Store copy is <b>version 4.1</b>, and the Phone feature arrived in 4.2. So the Store version <b>can't talk to your phone yet</b> — a new build is waiting on Google's review.</p>
+      <p><b>Use the download button above for now.</b> Once the Store catches up, you'll be able to install it in one click from there instead.</p>
+      <a class="link" href="https://chromewebstore.google.com/detail/yt-transcript-scraper-by-m/obcanmflhipkobalmdbjjbicinodhpcl" target="_blank" rel="noopener">See the Chrome Web Store listing →</a>
+    </details>
+  </section>
+
+  <!-- STEP 2 ------------------------------------------------------------ -->
+  <section class="step">
+    <div class="step-head"><span class="step-num">2</span><h2>Open Chrome's extensions page</h2></div>
+    <p>In Chrome, type this into the address bar and press Enter:</p>
+    <div class="copyrow">
+      <code id="chromeUrl">chrome://extensions</code>
+      <button class="btn btn-ghost" id="copyUrlBtn" type="button">Copy</button>
+    </div>
+    <p class="muted">It can't be a normal link — Chrome blocks pages from linking to its own settings. You have to type or paste it.</p>
+
+    <figure class="shot">
+      <svg viewBox="0 0 320 150" role="img" aria-label="Chrome window with the address bar reading chrome://extensions">
+        <rect x="4" y="4" width="312" height="142" rx="10" class="s-win"/>
+        <circle cx="20" cy="21" r="4" class="s-dot"/><circle cx="34" cy="21" r="4" class="s-dot"/><circle cx="48" cy="21" r="4" class="s-dot"/>
+        <rect x="62" y="13" width="240" height="16" rx="8" class="s-bar"/>
+        <text x="72" y="25" class="s-url">chrome://extensions</text>
+        <rect x="4" y="38" width="312" height="30" rx="0" class="s-head"/>
+        <text x="18" y="58" class="s-h1">Extensions</text>
+        <rect x="200" y="45" width="100" height="16" rx="8" class="s-ghost"/>
+        <text x="210" y="57" class="s-small">Developer mode</text>
+      </svg>
+      <figcaption>Type it in the address bar, not into Google.</figcaption>
+    </figure>
+  </section>
+
+  <!-- STEP 3 ------------------------------------------------------------ -->
+  <section class="step">
+    <div class="step-head"><span class="step-num">3</span><h2>Turn on Developer mode</h2></div>
+    <p>Top-right of that page there's a switch called <b>Developer mode</b>. Turn it <b>on</b>. Three new buttons appear.</p>
+    <figure class="shot">
+      <svg viewBox="0 0 320 120" role="img" aria-label="The Developer mode toggle switching on, revealing a Load unpacked button">
+        <rect x="4" y="4" width="312" height="112" rx="10" class="s-win"/>
+        <text x="18" y="28" class="s-h1">Extensions</text>
+        <text x="176" y="27" class="s-small">Developer mode</text>
+        <rect x="264" y="16" width="36" height="18" rx="9" class="s-on"/>
+        <circle cx="291" cy="25" r="7" class="s-knob"/>
+        <path d="M291 44 L291 58" class="s-arrow"/><path d="M287 54 L291 59 L295 54" class="s-arrow"/>
+        <rect x="18" y="66" width="88" height="24" rx="6" class="s-btn-hi"/>
+        <text x="30" y="82" class="s-btn-tx">Load unpacked</text>
+        <rect x="116" y="66" width="84" height="24" rx="6" class="s-ghost"/>
+        <text x="128" y="82" class="s-small">Pack extension</text>
+        <rect x="210" y="66" width="56" height="24" rx="6" class="s-ghost"/>
+        <text x="228" y="82" class="s-small">Update</text>
+      </svg>
+      <figcaption>Without this switch, the Load unpacked button never appears.</figcaption>
+    </figure>
+  </section>
+
+  <!-- STEP 4 ------------------------------------------------------------ -->
+  <section class="step">
+    <div class="step-head"><span class="step-num">4</span><h2>Click "Load unpacked" and pick the folder</h2></div>
+    <p>Choose the <b>folder</b> you unzipped in step 1 — the one with <code>manifest.json</code> inside it. Pick the folder itself, not a file inside it, and not the .zip.</p>
+    <figure class="shot">
+      <svg viewBox="0 0 320 150" role="img" aria-label="A file picker with the extension folder selected">
+        <rect x="4" y="4" width="312" height="142" rx="10" class="s-win"/>
+        <text x="18" y="26" class="s-h1">Select the extension folder</text>
+        <rect x="14" y="38" width="292" height="72" rx="8" class="s-panel"/>
+        <g class="s-row"><rect x="22" y="46" width="276" height="20" rx="5" class="s-sel"/>
+          <text x="34" y="60" class="s-folder">📁 youtube-transcript-extension</text></g>
+        <text x="34" y="82" class="s-small">📁 Downloads</text>
+        <text x="34" y="100" class="s-small">📁 Desktop</text>
+        <rect x="222" y="118" width="76" height="22" rx="6" class="s-btn-hi"/>
+        <text x="248" y="133" class="s-btn-tx">Select</text>
+      </svg>
+      <figcaption>The folder — not the zip, not a file inside it.</figcaption>
+    </figure>
+    <p class="muted">Chrome may warn that the extension isn't from the Store. That's expected for a hand-installed extension; it's the same code as the Store listing, just newer.</p>
+  </section>
+
+  <!-- STEP 5 ------------------------------------------------------------ -->
+  <section class="step">
+    <div class="step-head"><span class="step-num">5</span><h2>Open it and get your code</h2></div>
+    <p>Click the extension's icon in Chrome's toolbar, open the <b>Phone</b> tab, then press <b>Show pairing code</b>. Six digits appear. They're good for 10 minutes.</p>
+    <figure class="shot">
+      <svg viewBox="0 0 320 200" role="img" aria-label="The extension popup on the Phone tab showing a six digit pairing code">
+        <rect x="60" y="4" width="200" height="192" rx="10" class="s-win"/>
+        <text x="160" y="26" text-anchor="middle" class="s-brand">YT Scraper</text>
+        <g class="s-tabs">
+          <text x="82"  y="46" class="s-small">Current</text>
+          <text x="130" y="46" class="s-small">Batch</text>
+          <text x="172" y="46" class="s-small">Names</text>
+          <text x="216" y="46" class="s-tab-on">Phone</text>
+          <rect x="212" y="52" width="34" height="2" class="s-underline"/>
+        </g>
+        <rect x="76" y="64" width="168" height="26" rx="7" class="s-red"/>
+        <text x="160" y="81" text-anchor="middle" class="s-btn-tx">Show pairing code</text>
+        <rect x="76" y="100" width="168" height="54" rx="8" class="s-panel"/>
+        <text x="160" y="132" text-anchor="middle" class="s-code">418 902</text>
+        <text x="160" y="172" text-anchor="middle" class="s-small">Green dot = it's listening</text>
+        <circle cx="86" cy="168" r="4" class="s-green"/>
+      </svg>
+      <figcaption>The green dot means your computer is awake and listening.</figcaption>
+    </figure>
+  </section>
+
+  <!-- STEP 6 ------------------------------------------------------------ -->
+  <section class="step">
+    <div class="step-head"><span class="step-num step-num-done">6</span><h2>Type the code on your phone</h2></div>
+    <p>Back on your phone, open PocketTranscript and type those six digits. That's it — you'll never do this again on this phone.</p>
+    <figure class="shot">
+      <svg viewBox="0 0 320 200" role="img" aria-label="The phone app with six digits typed into the pairing box">
+        <rect x="104" y="4" width="112" height="192" rx="16" class="s-phone"/>
+        <rect x="112" y="16" width="96" height="172" rx="10" class="s-screen"/>
+        <text x="160" y="46" text-anchor="middle" class="s-h1">Pairing code</text>
+        <g class="s-digits">
+          <rect x="120" y="60" width="80" height="30" rx="7" class="s-panel"/>
+          <text x="160" y="81" text-anchor="middle" class="s-code-sm">418902</text>
+        </g>
+        <rect x="120" y="100" width="80" height="24" rx="7" class="s-accent"/>
+        <text x="160" y="116" text-anchor="middle" class="s-btn-dark">Connect</text>
+        <text x="160" y="146" text-anchor="middle" class="s-ok">✓ Computer awake</text>
+      </svg>
+      <figcaption>Paired. Now any YouTube link you send gets a transcript back.</figcaption>
+    </figure>
+    <a class="btn btn-primary btn-lg" href="/">Open the app</a>
+  </section>
+
+  <!-- TROUBLE ----------------------------------------------------------- -->
+  <section class="step">
+    <div class="step-head"><span class="step-num step-num-q">?</span><h2>If something's off</h2></div>
+
+    <details class="aside">
+      <summary>The app says my computer is asleep</summary>
+      <p>Chrome has to be running on the computer. Wake it, open Chrome, and the app turns green on its own within about a minute. Anything you sent meanwhile is still queued — nothing is lost, and you don't need to send it again.</p>
+    </details>
+
+    <details class="aside">
+      <summary>The code says it expired</summary>
+      <p>Codes last 10 minutes and work once. Press <b>Show pairing code</b> again for a fresh one.</p>
+    </details>
+
+    <details class="aside">
+      <summary>A transcript came back as an error</summary>
+      <p>Most often YouTube simply hasn't made captions for that video yet — on a fresh upload that can take 15–30 minutes, longer for Bangla. Tap <b>Retry</b> on the row and it goes back into the queue.</p>
+    </details>
+
+    <details class="aside">
+      <summary>How long are my transcripts kept?</summary>
+      <p><b>7 days</b>, then they're deleted automatically. Each row shows its age so you can see what's about to go. Copy anything you want to keep.</p>
+    </details>
+
+    <details class="aside">
+      <summary>I already had this extension installed</summary>
+      <p>Then you just need the newer build. Do steps 1–4 again; Chrome replaces the old copy. Check the version badge in the bottom corner of the popup — it should read <b>4.5</b> or higher.</p>
+    </details>
+  </section>
+
+  <footer class="foot"><span>PocketTranscript · Mosh Bari</span><a class="link" href="/">Back to app</a></footer>
+</main>
+
+<div id="toast" class="toast hidden"></div>
+<script src="/install.js"></script>
+</body>
+</html>

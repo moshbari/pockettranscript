@@ -16,6 +16,7 @@
 const express = require('express');
 const crypto = require('crypto');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,10 +32,72 @@ const pairCodes = new Map();
 const ONLINE_MS   = 90 * 1000;          // desktop counts as awake if seen this recently
 const LONG_POLL_MS = 25 * 1000;         // how long the extension's poll hangs open
 const PAIR_TTL_MS = 10 * 60 * 1000;     // a pairing code is good for 10 minutes
-const MAX_JOBS    = 30;                 // keep the last N jobs per device
-const DEVICE_TTL_MS = 14 * 24 * 3600 * 1000;
+const KEEP_MS     = 7 * 24 * 3600 * 1000;   // transcripts are kept for 7 days
+const MAX_JOBS    = 300;                // per-device backstop so one batch can't eat the box
+const DEVICE_TTL_MS = 30 * 24 * 3600 * 1000;
 
 const now = () => Date.now();
+
+// ---------------------------------------------------------------- disk ----
+// Transcripts have to outlive a redeploy, or "kept for 7 days" is a lie: every
+// push would silently empty the phone's list. Railway gives the service a
+// volume at /data; everything is small text, so one JSON file is plenty.
+const DATA_DIR  = process.env.DATA_DIR || '/data';
+const DATA_FILE = path.join(DATA_DIR, 'store.json');
+let saveTimer = null;
+let saveFailed = false;
+
+function serialise() {
+  const out = {};
+  for (const [id, d] of devices) {
+    out[id] = { name: d.name, lastSeen: d.lastSeen, jobs: [...d.jobs.values()] };
+  }
+  return JSON.stringify({ version: 1, savedAt: now(), devices: out });
+}
+
+function saveNow() {
+  try {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+    // Write beside the target and rename, so a crash mid-write can't leave a
+    // half-written file that fails to parse on the next boot.
+    const tmp = DATA_FILE + '.tmp';
+    fs.writeFileSync(tmp, serialise());
+    fs.renameSync(tmp, DATA_FILE);
+    saveFailed = false;
+  } catch (e) {
+    if (!saveFailed) console.error('[store] could not save:', e.message);
+    saveFailed = true;   // log once, keep serving from memory
+  }
+}
+
+// Called on every change; batches a burst of writes into one.
+function save() {
+  if (saveTimer) return;
+  saveTimer = setTimeout(() => { saveTimer = null; saveNow(); }, 1000);
+}
+
+function load() {
+  try {
+    if (!fs.existsSync(DATA_FILE)) return;
+    const raw = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+    const cutoff = now() - KEEP_MS;
+    let jobs = 0;
+    for (const [id, d] of Object.entries(raw.devices || {})) {
+      const dev = { name: d.name || 'Desktop', lastSeen: d.lastSeen || 0, jobs: new Map(), waiters: [] };
+      for (const j of d.jobs || []) {
+        if (j.createdAt < cutoff) continue;               // past its 7 days
+        // Anything caught mid-flight when the process died is nobody's job now.
+        if (j.status === 'working') j.status = 'queued';
+        dev.jobs.set(j.id, j);
+        jobs++;
+      }
+      devices.set(id, dev);
+    }
+    console.log(`[store] loaded ${devices.size} device(s), ${jobs} transcript(s)`);
+  } catch (e) {
+    console.error('[store] could not load, starting empty:', e.message);
+  }
+}
 
 // Devices are created on first sight from EITHER side. That is what makes the
 // pairing survive a server restart: the phone still knows its deviceId, so the
@@ -72,6 +135,8 @@ function recentJobs(d) {
 }
 
 function trimJobs(d) {
+  const cutoff = now() - KEEP_MS;
+  for (const j of [...d.jobs.values()]) if (j.createdAt < cutoff) d.jobs.delete(j.id);
   const all = [...d.jobs.values()].sort((a, b) => b.createdAt - a.createdAt);
   for (const j of all.slice(MAX_JOBS)) d.jobs.delete(j.id);
 }
@@ -136,6 +201,7 @@ app.post('/api/desktop/poll', (req, res) => {
     if (job) {
       job.status = 'working';
       job.updatedAt = now();
+      save();
       return res.json({ ok: true, job: { id: job.id, url: job.url, videoId: job.videoId } });
     }
     res.json({ ok: true, job: null });
@@ -179,6 +245,7 @@ app.post('/api/desktop/result', (req, res) => {
     job.error = error || 'No transcript came back. This video may not have captions yet.';
   }
   job.updatedAt = now();
+  save();
   res.json({ ok: true });
 });
 
@@ -256,6 +323,7 @@ app.post('/api/jobs', (req, res) => {
   };
   d.jobs.set(job.id, job);
   trimJobs(d);
+  save();
   wakeWaiters(d);   // a desktop poll is probably hanging right now — feed it
 
   res.json({
@@ -293,6 +361,7 @@ app.post('/api/jobs/:id/retry', (req, res) => {
   job.status = 'queued';
   job.error = '';
   job.updatedAt = now();
+  save();
   wakeWaiters(d);
   res.json({ ok: true, job: jobSummary(job) });
 });
@@ -301,11 +370,19 @@ app.delete('/api/jobs/:id', (req, res) => {
   const deviceId = String(req.query.deviceId || '');
   if (!isValidDeviceId(deviceId)) return res.status(400).json({ ok: false, error: 'Bad deviceId' });
   getDevice(deviceId).jobs.delete(req.params.id);
+  save();
   res.json({ ok: true });
 });
 
 // ============================================================= static =======
-app.get('/health', (_req, res) => res.json({ ok: true, devices: devices.size, up: process.uptime() }));
+app.get('/health', (_req, res) => res.json({
+  ok: true,
+  devices: devices.size,
+  transcripts: [...devices.values()].reduce((n, d) => n + d.jobs.size, 0),
+  persisted: !saveFailed && fs.existsSync(DATA_FILE),
+  keepDays: KEEP_MS / 86400000,
+  up: process.uptime(),
+}));
 
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
 app.get('*', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
@@ -314,9 +391,23 @@ app.get('*', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.h
 setInterval(() => {
   const t = now();
   for (const [code, e] of pairCodes) if (e.expires < t) pairCodes.delete(code);
+  let changed = false;
   for (const [id, d] of devices) {
-    if (d.lastSeen && t - d.lastSeen > DEVICE_TTL_MS && !d.waiters.length) devices.delete(id);
+    const before = d.jobs.size;
+    trimJobs(d);                                  // drop anything past 7 days
+    if (d.jobs.size !== before) changed = true;
+    if (d.lastSeen && t - d.lastSeen > DEVICE_TTL_MS && !d.waiters.length && !d.jobs.size) {
+      devices.delete(id);
+      changed = true;
+    }
   }
+  if (changed) save();
 }, 60 * 1000).unref();
 
+// Last write wins on the way out, so a redeploy doesn't lose the last second.
+for (const sig of ['SIGTERM', 'SIGINT']) {
+  process.on(sig, () => { clearTimeout(saveTimer); saveNow(); process.exit(0); });
+}
+
+load();
 app.listen(PORT, () => console.log(`PocketTranscript listening on ${PORT}`));

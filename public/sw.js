@@ -2,8 +2,9 @@
 // The shell is cached; every /api/ call goes straight to the network, because a
 // cached "your computer is awake" would be a lie.
 
-const CACHE = 'pocket-transcript-v1';
+const CACHE = 'pocket-transcript-v2';
 const SHELL = ['/', '/index.html', '/styles.css', '/app.js',
+               '/install', '/install.css', '/install.js',
                '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {

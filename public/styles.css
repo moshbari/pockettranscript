@@ -51,8 +51,11 @@ body{
 .steps b{color:var(--ink)}
 .label{display:block;font-size:12.5px;font-weight:650;letter-spacing:.03em;
   text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px}
+.section-head{display:flex;align-items:baseline;justify-content:space-between;
+  gap:10px;margin:6px 2px 10px}
 .section-title{font-size:12.5px;font-weight:650;letter-spacing:.05em;
-  text-transform:uppercase;color:var(--ink-faint);margin:6px 2px 10px}
+  text-transform:uppercase;color:var(--ink-faint);margin:0}
+.section-note{font-size:12px;color:var(--ink-faint)}
 
 /* ---- inputs ---- */
 .text-input,.code-input{
@@ -136,4 +139,20 @@ body{
   bottom:calc(env(safe-area-inset-bottom) + 24px);
   background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:999px;
   font-size:14px;font-weight:650;z-index:50;box-shadow:0 8px 28px rgba(0,0,0,.45);
+}
+
+/* ---- setup-guide links ---- */
+.bar-right{display:flex;align-items:center;gap:9px}
+.helplink{
+  color:var(--ink-dim); font-size:13px; font-weight:600;
+  text-decoration:none; padding:6px 4px; white-space:nowrap;
+}
+.helplink:active{color:var(--accent)}
+.guide-link{
+  display:block; text-align:center; text-decoration:none;
+  margin-top:12px; color:var(--ink);
+}
+.banner-link{
+  display:inline-block; margin-top:8px;
+  color:#fecaca; font-weight:700; text-decoration:underline;
 }

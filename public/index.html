@@ -19,9 +19,12 @@
     <span class="logo">▶</span>
     <span>PocketTranscript</span>
   </div>
-  <button id="statusPill" class="pill pill-unknown" type="button">
-    <span class="dot"></span><span id="statusText">Checking…</span>
-  </button>
+  <div class="bar-right">
+    <a class="helplink" href="/install" title="Setup guide">Setup</a>
+    <button id="statusPill" class="pill pill-unknown" type="button">
+      <span class="dot"></span><span id="statusText">Checking…</span>
+    </button>
+  </div>
 </header>
 
 <!-- ── Screen 1: pair this phone with the desktop ─────────────────────── -->
@@ -34,6 +37,7 @@
       <li>Open the <b>📱 Phone</b> tab and tap <b>Show pairing code</b>.</li>
       <li>Type the 6 digits below.</li>
     </ol>
+    <a class="btn btn-ghost btn-lg guide-link" href="/install">📖 Show me, with pictures</a>
   </div>
 
   <div class="card">
@@ -53,6 +57,7 @@
     <div class="banner-body">
       PocketTranscript needs Chrome running on your Mac. Wake it up and this turns green on its own —
       anything you send meanwhile just waits in the queue.
+      <a class="banner-link" href="/install">Setup guide →</a>
     </div>
   </div>
 
@@ -69,7 +74,10 @@
   </div>
 
   <section id="jobsSection" class="jobs hidden">
-    <h2 class="section-title">Recent</h2>
+    <div class="section-head">
+      <h2 class="section-title">Recent</h2>
+      <span class="section-note">kept 7 days</span>
+    </div>
     <div id="jobsList"></div>
   </section>
 
