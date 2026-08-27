@@ -87,7 +87,7 @@ function unpair() {
   localStorage.removeItem(LS_DEVICE);
   localStorage.removeItem(LS_NAME);
   deviceId = '';
-  clearInterval(pollTimer);
+  clearTimeout(pollTimer);
   show('pairScreen');
 }
 
@@ -98,9 +98,13 @@ function paintStatus(s) {
   pill.className = 'pill ' + (s.online ? 'pill-online' : 'pill-offline');
   $('statusText').textContent = s.online ? 'Computer awake' : 'Computer asleep';
   $('asleepBanner').classList.toggle('hidden', !!s.online);
+  // "last seen never" reads like a fault. Before the desktop has ever checked
+  // in (a fresh pairing, or a server restart) say what is actually happening.
   $('deviceLabel').textContent = s.online
     ? `Connected to ${s.name}`
-    : `${s.name} — last seen ${ago(s.lastSeenMsAgo)}`;
+    : s.everSeen
+      ? `${s.name} — last seen ${ago(s.lastSeenMsAgo)}`
+      : 'Waiting to hear from your computer';
 }
 
 function paintJobs(jobs) {
@@ -148,7 +152,7 @@ function paintJobs(jobs) {
           await api(`/api/jobs/${j.id}/retry`, {
             method: 'POST', body: JSON.stringify({ deviceId }),
           });
-          refresh();
+          loop();
         } catch (e) { toast(e.message); retry.disabled = false; }
       });
       row.appendChild(retry);
@@ -158,16 +162,27 @@ function paintJobs(jobs) {
 }
 
 async function refresh() {
-  if (!deviceId) return;
+  if (!deviceId) return false;
   try {
     const s = await api(`/api/status?deviceId=${deviceId}`);
     paintStatus(s);
     paintJobs(s.jobs);
+    return s.jobs.some((j) => j.status === 'queued' || j.status === 'working');
   } catch {
     // A dropped signal is not the same as a sleeping Mac — don't lie about it.
     $('statusPill').className = 'pill pill-unknown';
     $('statusText').textContent = 'No connection';
+    return false;
   }
+}
+
+// Check often while the desktop still owes us something, then back off. A phone
+// on a fixed 4-second timer is both too slow to feel live and too greedy on battery.
+function loop() {
+  clearTimeout(pollTimer);
+  refresh().then((busy) => {
+    pollTimer = setTimeout(loop, busy ? 2000 : 10000);
+  });
 }
 
 // ---------------------------------------------------------- submitting ----
@@ -186,7 +201,7 @@ async function submitUrl() {
     toast(r.online
       ? (r.duplicate ? 'Already working on that one' : 'Sent to your computer')
       : 'Queued — it will run when your Mac wakes');
-    refresh();
+    loop();
   } catch (e) {
     showError($('mainError'), e.message);
   } finally {
@@ -243,9 +258,7 @@ async function copyAll() {
 // -------------------------------------------------------------- startup ---
 function startMain() {
   show('mainScreen');
-  refresh();
-  clearInterval(pollTimer);
-  pollTimer = setInterval(refresh, 4000);
+  loop();
 }
 
 function wireUp() {
@@ -266,7 +279,7 @@ function wireUp() {
 
   $('statusPill').addEventListener('click', refresh);
   $('unpairBtn').addEventListener('click', unpair);
-  $('backBtn').addEventListener('click', () => { show('mainScreen'); refresh(); });
+  $('backBtn').addEventListener('click', () => { show('mainScreen'); loop(); });
   $('tabPlain').addEventListener('click', () => { stampedView = false; renderBody(); });
   $('tabStamped').addEventListener('click', () => { stampedView = true; renderBody(); });
   $('copyBtn').addEventListener('click', copyAll);
@@ -275,7 +288,7 @@ function wireUp() {
   });
 
   // Coming back to the app should feel instant, not four seconds stale.
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) loop(); });
 }
 
 function boot() {
