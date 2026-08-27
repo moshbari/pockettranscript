@@ -61,7 +61,7 @@ function jobSummary(j) {
     status: j.status,
     title: j.title || '',
     error: j.error || '',
-    words: j.text ? j.text.trim().split(/\s+/).length : 0,
+    words: j.plain ? j.plain.trim().split(/\s+/).length : 0,
     createdAt: j.createdAt,
     updatedAt: j.updatedAt,
   };
@@ -158,7 +158,7 @@ app.post('/api/desktop/poll', (req, res) => {
 
 // The extension posts the finished transcript back here.
 app.post('/api/desktop/result', (req, res) => {
-  const { deviceId, jobId, ok, text, segments, title, error } = req.body || {};
+  const { deviceId, jobId, ok, text, plain, segments, title, error } = req.body || {};
   if (!isValidDeviceId(deviceId)) return res.status(400).json({ ok: false, error: 'Bad deviceId' });
 
   const d = getDevice(deviceId);
@@ -168,7 +168,10 @@ app.post('/api/desktop/result', (req, res) => {
 
   if (ok && text && text.trim().length > 0) {
     job.status = 'done';
+    // text = exactly what the desktop .txt download holds (title, video URL,
+    // then "0:00 - line" rows). plain = the same words with nothing around them.
     job.text = text;
+    job.plain = plain || text;
     job.segments = Array.isArray(segments) ? segments : [];
     job.title = title || '';
   } else {
@@ -245,6 +248,7 @@ app.post('/api/jobs', (req, res) => {
     status: 'queued',
     title: '',
     text: '',
+    plain: '',
     segments: [],
     error: '',
     createdAt: now(),
@@ -269,7 +273,12 @@ app.get('/api/jobs/:id', (req, res) => {
   if (!job) return res.status(404).json({ ok: false, error: 'That transcript is no longer on the server.' });
   res.json({
     ok: true,
-    job: { ...jobSummary(job), text: job.text || '', segments: job.segments || [] },
+    job: {
+      ...jobSummary(job),
+      text: job.text || '',
+      plain: job.plain || '',
+      segments: job.segments || [],
+    },
     online: d.lastSeen > 0 && now() - d.lastSeen < ONLINE_MS,
   });
 });

@@ -11,7 +11,7 @@ const $ = (id) => document.getElementById(id);
 let deviceId  = localStorage.getItem(LS_DEVICE) || '';
 let pollTimer = null;
 let currentJob = null;
-let stampedView = false;
+let stampedView = true;   // default = the full transcript, same as the desktop .txt
 
 // ------------------------------------------------------------- helpers ----
 async function api(path, opts = {}) {
@@ -211,14 +211,21 @@ async function submitUrl() {
 }
 
 // ------------------------------------------------------- transcript view --
+// The full view is byte-for-byte what the extension writes into its .txt on the
+// computer: title, video URL, blank line, then "0:00 - line" rows. It is built
+// by content.js, not reassembled here, so the two can't drift apart.
+function fullTranscript() {
+  if (!currentJob) return '';
+  if (currentJob.text) return currentJob.text;
+  // Only if an old job predates the server carrying `text`.
+  const head = [currentJob.title, currentJob.url].filter(Boolean).join('\n');
+  const body = (currentJob.segments || []).map((s) => `${s.timestamp} - ${s.text}`).join('\n');
+  return head ? `${head}\n\n${body}` : body;
+}
+
 function renderBody() {
   if (!currentJob) return;
-  if (stampedView && currentJob.segments && currentJob.segments.length) {
-    $('viewBody').textContent = currentJob.segments
-      .map((s) => `[${s.timestamp}] ${s.text}`).join('\n');
-  } else {
-    $('viewBody').textContent = currentJob.text || '';
-  }
+  $('viewBody').textContent = stampedView ? fullTranscript() : (currentJob.plain || '');
   $('tabPlain').classList.toggle('active', !stampedView);
   $('tabStamped').classList.toggle('active', stampedView);
 }
@@ -227,9 +234,10 @@ async function openJob(id) {
   try {
     const r = await api(`/api/jobs/${id}?deviceId=${deviceId}`);
     currentJob = r.job;
-    stampedView = false;
+    stampedView = true;
     $('viewTitle').textContent = currentJob.title || 'Transcript';
-    $('tabStamped').classList.toggle('hidden', !(currentJob.segments || []).length);
+    // Nothing to strip down to? Then there's no second view to offer.
+    $('tabPlain').classList.toggle('hidden', !currentJob.plain);
     $('shareBtn').classList.toggle('hidden', !navigator.share);
     renderBody();
     show('viewScreen');
