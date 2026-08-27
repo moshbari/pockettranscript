@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0f14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PocketTranscript">
+<title>PocketTranscript</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<header class="bar">
+  <div class="brand">
+    <span class="logo">▶</span>
+    <span>PocketTranscript</span>
+  </div>
+  <button id="statusPill" class="pill pill-unknown" type="button">
+    <span class="dot"></span><span id="statusText">Checking…</span>
+  </button>
+</header>
+
+<!-- ── Screen 1: pair this phone with the desktop ─────────────────────── -->
+<main id="pairScreen" class="screen hidden">
+  <div class="card intro">
+    <h1>Connect your computer</h1>
+    <p>Your Mac does the actual transcript grabbing. Pair this phone with it once — you'll never do this again on this phone.</p>
+    <ol class="steps">
+      <li>On your Mac, click the <b>YT Transcript Scraper</b> extension.</li>
+      <li>Open the <b>📱 Phone</b> tab and tap <b>Show pairing code</b>.</li>
+      <li>Type the 6 digits below.</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <label for="codeInput" class="label">Pairing code</label>
+    <input id="codeInput" class="code-input" inputmode="numeric" pattern="[0-9]*"
+           maxlength="6" autocomplete="one-time-code" placeholder="000000">
+    <button id="pairBtn" class="btn btn-primary btn-lg">Connect</button>
+    <p id="pairError" class="error hidden"></p>
+  </div>
+</main>
+
+<!-- ── Screen 2: the everyday screen ──────────────────────────────────── -->
+<main id="mainScreen" class="screen hidden">
+
+  <div id="asleepBanner" class="banner hidden">
+    <div class="banner-title">😴 Your computer is asleep</div>
+    <div class="banner-body">
+      PocketTranscript needs Chrome running on your Mac. Wake it up and this turns green on its own —
+      anything you send meanwhile just waits in the queue.
+    </div>
+  </div>
+
+  <div class="card">
+    <label for="urlInput" class="label">YouTube link</label>
+    <div class="input-row">
+      <input id="urlInput" class="text-input" type="url" inputmode="url"
+             autocomplete="off" autocapitalize="off" spellcheck="false"
+             placeholder="https://youtu.be/…">
+      <button id="pasteBtn" class="btn btn-ghost" title="Paste from clipboard">Paste</button>
+    </div>
+    <button id="goBtn" class="btn btn-primary btn-lg">Get the transcript</button>
+    <p id="mainError" class="error hidden"></p>
+  </div>
+
+  <section id="jobsSection" class="jobs hidden">
+    <h2 class="section-title">Recent</h2>
+    <div id="jobsList"></div>
+  </section>
+
+  <footer class="foot">
+    <span id="deviceLabel"></span>
+    <button id="unpairBtn" class="linkbtn">Disconnect this phone</button>
+  </footer>
+</main>
+
+<!-- ── Screen 3: one transcript ───────────────────────────────────────── -->
+<main id="viewScreen" class="screen hidden">
+  <div class="view-head">
+    <button id="backBtn" class="btn btn-ghost">‹ Back</button>
+    <div class="seg">
+      <button id="tabPlain" class="seg-btn active">Text</button>
+      <button id="tabStamped" class="seg-btn">Timestamps</button>
+    </div>
+  </div>
+  <h2 id="viewTitle" class="view-title"></h2>
+  <div class="view-actions">
+    <button id="copyBtn" class="btn btn-primary">Copy all</button>
+    <button id="shareBtn" class="btn btn-ghost hidden">Share</button>
+  </div>
+  <pre id="viewBody" class="transcript"></pre>
+</main>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="/app.js"></script>
+</body>
+</html>
