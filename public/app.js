@@ -271,8 +271,26 @@ async function copyAll() {
   }
 }
 
+// ------------------------------------------------------- share button ---
+// The iPhone Shortcut asks for this phone's code once, when it's added.
+async function copyCode() {
+  try {
+    await navigator.clipboard.writeText(deviceId);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function installShortcut() {
+  const copied = await copyCode();
+  toast(copied ? 'Code copied ✓ Paste it when asked' : 'Copy your code below first');
+  setTimeout(() => { location.href = '/get-transcript.shortcut'; }, copied ? 900 : 2500);
+}
+
 // -------------------------------------------------------------- startup ---
 function startMain() {
+  $('copyCodeBtn').textContent = deviceId;
   show('mainScreen');
   loop();
 }
@@ -291,6 +309,11 @@ function wireUp() {
       const t = await navigator.clipboard.readText();
       if (t) { $('urlInput').value = t.trim(); toast('Pasted'); }
     } catch { toast('Hold the box and tap Paste'); }
+  });
+
+  $('installShortcutBtn').addEventListener('click', installShortcut);
+  $('copyCodeBtn').addEventListener('click', async () => {
+    toast((await copyCode()) ? 'Code copied ✓' : 'Hold the code to copy it');
   });
 
   $('statusPill').addEventListener('click', refresh);

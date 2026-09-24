@@ -87,7 +87,16 @@ function load() {
       for (const j of d.jobs || []) {
         if (j.createdAt < cutoff) continue;               // past its 7 days
         // Anything caught mid-flight when the process died is nobody's job now.
-        if (j.status === 'working') j.status = 'queued';
+        // Server-side jobs (links and files from the phone's Get Transcript
+        // button) can't be resumed — their upload is gone — so say so plainly.
+        if (j.status === 'working' || (j.worker === 'server' && j.status === 'queued')) {
+          if (j.worker === 'server') {
+            j.status = 'error';
+            j.error = 'The server restarted while this was running. Please send it again.';
+          } else {
+            j.status = 'queued';
+          }
+        }
         dev.jobs.set(j.id, j);
         jobs++;
       }
@@ -151,8 +160,9 @@ function wakeWaiters(d) {
 }
 
 function nextQueuedJob(d) {
+  // Only YouTube jobs are the extension's; the server runs everything else.
   return [...d.jobs.values()].sort((a, b) => a.createdAt - b.createdAt)
-    .find((j) => j.status === 'queued') || null;
+    .find((j) => j.status === 'queued' && j.worker !== 'server') || null;
 }
 
 // -------------------------------------------------------- YouTube ids ----
@@ -358,6 +368,9 @@ app.post('/api/jobs/:id/retry', (req, res) => {
   const d = getDevice(deviceId);
   const job = d.jobs.get(req.params.id);
   if (!job) return res.status(404).json({ ok: false, error: 'That job is gone.' });
+  if (job.worker === 'server') {
+    return res.status(400).json({ ok: false, error: 'Send this one again from the Get Transcript button on your phone.' });
+  }
   job.status = 'queued';
   job.error = '';
   job.updatedAt = now();
@@ -374,6 +387,195 @@ app.delete('/api/jobs/:id', (req, res) => {
   res.json({ ok: true });
 });
 
+// ================================================ GET TRANSCRIPT BUTTON =====
+// The iPhone Shortcut in the Share menu. It hands over a link or a file and
+// gets back plain text, ready for ChatGPT or Claude. Two calls:
+//
+//   POST /api/grab?deviceId=…      JSON {url}  or  multipart field "file"
+//   GET  /api/grab/:id?deviceId=…  holds up to 45s, answers the moment it's done
+//
+// YouTube goes to the Mac's extension (YouTube blocks servers). Every other
+// link, and every file, goes to the transcriber service (yt-dlp + Whisper).
+const multer = require('multer');
+const os = require('os');
+const TRANSCRIBER_URL = process.env.TRANSCRIBER_URL || 'https://transcriber-production-f2f1.up.railway.app';
+const GRAB_WAIT_MS = 40 * 1000;   // under the ~60s an iPhone Shortcut waits for an answer
+const upload = multer({ dest: os.tmpdir(), limits: { fileSize: 1024 * 1024 * 1024 } });
+
+// A Shortcut's simplest upload is the file itself as the whole request body
+// (no form around it). Save that to disk so it looks like a multer upload.
+function rawUpload(req, res, next) {
+  const type = String(req.headers['content-type'] || '');
+  if (/json|multipart|x-www-form-urlencoded/i.test(type) || !Number(req.headers['content-length'] || 1)) return next();
+  const tmp = path.join(os.tmpdir(), 'grab-' + crypto.randomBytes(8).toString('hex'));
+  const out = fs.createWriteStream(tmp);
+  req.pipe(out);
+  out.on('finish', () => {
+    req.file = { path: tmp, originalname: 'Recording from phone', size: out.bytesWritten };
+    next();
+  });
+  out.on('error', (e) => res.status(500).json({ ok: false, error: `Upload failed: ${e.message}` }));
+}
+
+// The instructions offered on the phone after the transcript arrives. They live
+// here, not in the Shortcut, so they can change without reinstalling it.
+const PROMPTS = [
+  'Summarise this in simple words',
+  'Give me the key points and the action steps',
+  'Pull out every useful idea, tip and example',
+  'Turn this into a social media post',
+  'Write this up as a clean, readable article',
+  'Translate this into Bangla',
+  '✏️ Type my own instruction',
+];
+
+function newServerJob(d, fields) {
+  const job = {
+    id: crypto.randomBytes(8).toString('hex'),
+    worker: 'server',
+    url: '', videoId: '', status: 'working', title: '',
+    text: '', plain: '', segments: [], error: '',
+    createdAt: now(), updatedAt: now(),
+    ...fields,
+  };
+  d.jobs.set(job.id, job);
+  trimJobs(d);
+  save();
+  return job;
+}
+
+function finishJob(job, result) {
+  if (result.text && result.text.trim()) {
+    job.status = 'done';
+    job.plain = result.text.trim();
+    job.text = job.plain;
+    job.segments = Array.isArray(result.segments) ? result.segments : [];
+  } else {
+    job.status = 'error';
+    job.error = result.error || 'No words came back. The recording may be silent or music only.';
+  }
+  job.updatedAt = now();
+  save();
+}
+
+async function callTranscriber(pathname, body) {
+  const r = await fetch(TRANSCRIBER_URL + pathname, { method: 'POST', ...body });
+  let data = {};
+  try { data = await r.json(); } catch { /* not JSON */ }
+  if (!r.ok || !data.text) {
+    return { error: data.error || `The transcriber answered ${r.status}.` };
+  }
+  return data;
+}
+
+async function runLink(job) {
+  try {
+    finishJob(job, await callTranscriber('/transcribe', {
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: job.url }),
+    }));
+  } catch (e) {
+    finishJob(job, { error: `Couldn't reach the transcriber: ${e.message}` });
+  }
+}
+
+async function runFile(job, file) {
+  try {
+    const form = new FormData();
+    const blob = await fs.openAsBlob(file.path);
+    form.append('file', blob, file.originalname || 'recording');
+    finishJob(job, await callTranscriber('/transcribe-media', { body: form }));
+  } catch (e) {
+    finishJob(job, { error: `Couldn't reach the transcriber: ${e.message}` });
+  } finally {
+    fs.rm(file.path, { force: true }, () => {});
+  }
+}
+
+// The Shortcut sends whatever it was given — sometimes a bare link, sometimes
+// a caption with a link inside it. Pull the first link out.
+function firstUrl(s) {
+  const m = String(s || '').match(/https?:\/\/[^\s<>"']+/);
+  return m ? m[0] : '';
+}
+
+app.post('/api/grab', rawUpload, upload.single('file'), (req, res) => {
+  const deviceId = String(req.query.deviceId || (req.body && req.body.deviceId) || '');
+  if (!isValidDeviceId(deviceId)) {
+    if (req.file) fs.rm(req.file.path, { force: true }, () => {});
+    return res.status(400).json({ ok: false, error: 'This shortcut is not linked to your account.' });
+  }
+  const d = getDevice(deviceId);
+
+  if (req.file && req.file.size > 0) {
+    const job = newServerJob(d, { title: req.file.originalname || 'Recording from phone' });
+    runFile(job, req.file);
+    return res.json({ ok: true, id: job.id });
+  }
+
+  const url = firstUrl(req.body && (req.body.url || req.body.text));
+  if (!url) return res.status(400).json({ ok: false, error: "I didn't find a link or a file in what you shared." });
+
+  const videoId = extractYtId(url);
+  if (videoId) {
+    const macAwake = d.lastSeen > 0 && now() - d.lastSeen < ONLINE_MS;
+    if (macAwake) {
+      // Same path as the phone app: the Mac's extension reads the captions.
+      const job = newServerJob(d, {
+        worker: 'extension', status: 'queued',
+        url: `https://www.youtube.com/watch?v=${videoId}`, videoId,
+      });
+      wakeWaiters(d);
+      return res.json({ ok: true, id: job.id });
+    }
+    // Mac asleep: the server's own YouTube path sometimes works. Try it, and
+    // if it fails, say why in words he can act on.
+    const job = newServerJob(d, { url: `https://www.youtube.com/watch?v=${videoId}`, videoId });
+    runLink(job).then(() => {
+      if (job.status === 'error') {
+        job.error = 'Your computer is asleep, and YouTube only gives transcripts to it. Wake the Mac (with Chrome open) and try again.';
+        save();
+      }
+    });
+    return res.json({ ok: true, id: job.id });
+  }
+
+  const job = newServerJob(d, { url });
+  runLink(job);
+  res.json({ ok: true, id: job.id });
+});
+
+app.get('/api/grab/:id', async (req, res) => {
+  const deviceId = String(req.query.deviceId || '');
+  if (!isValidDeviceId(deviceId)) return res.status(400).json({ ok: false, error: 'Bad deviceId' });
+  const d = getDevice(deviceId);
+  const job = d.jobs.get(req.params.id);
+  if (!job) return res.status(404).json({ ok: false, state: 'error', error: 'That transcript is no longer on the server.' });
+
+  const until = now() + GRAB_WAIT_MS;
+  let closed = false;
+  res.on('close', () => { closed = true; });
+  while ((job.status === 'queued' || job.status === 'working') && now() < until && !closed) {
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+  if (closed) return;
+
+  if (job.status === 'done') {
+    // A link gets its title and address on top; a recording just gets its words.
+    const head = job.url ? [job.title, job.url].filter(Boolean).join('\n') : '';
+    const transcript = (job.plain || job.text || '').trim();
+    return res.json({
+      ok: true, state: 'done',
+      title: job.title || '',
+      words: transcript.split(/\s+/).length,
+      transcript: head ? `${head}\n\n${transcript}` : transcript,
+      prompts: PROMPTS,
+    });
+  }
+  if (job.status === 'error') return res.json({ ok: true, state: 'error', error: job.error });
+  res.json({ ok: true, state: 'working' });
+});
+
 // ============================================================= static =======
 app.get('/health', (_req, res) => res.json({
   ok: true,
@@ -383,6 +585,12 @@ app.get('/health', (_req, res) => res.json({
   keepDays: KEEP_MS / 86400000,
   up: process.uptime(),
 }));
+
+// The iPhone names the shortcut after the file, so hand it over as "Get Transcript".
+app.get('/get-transcript.shortcut', (_req, res) => {
+  res.set('Cache-Control', 'no-cache');
+  res.download(path.join(__dirname, 'public', 'get-transcript.shortcut'), 'Get Transcript.shortcut');
+});
 
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
 app.get('*', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));

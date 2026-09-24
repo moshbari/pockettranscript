@@ -156,3 +156,13 @@ body{
   display:inline-block; margin-top:8px;
   color:#fecaca; font-weight:700; text-decoration:underline;
 }
+
+/* ---- the Share button card ---- */
+.sharecard{border-color:rgba(56,189,248,.35)}
+.share-title{font-weight:700;font-size:16px;margin-bottom:6px}
+.share-body{margin:0 0 12px;color:var(--ink-dim);font-size:14.5px}
+.share-body b{color:var(--ink)}
+.share-hint{margin:10px 0 0;color:var(--ink-faint);font-size:13px;line-height:1.5}
+.share-hint b{color:var(--ink-dim)}
+.code-chip{font-family:ui-monospace,Menlo,monospace;font-size:12px;word-break:break-all;
+  -webkit-user-select:all;user-select:all;padding:0;text-align:left}
