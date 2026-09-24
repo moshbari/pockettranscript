@@ -282,7 +282,9 @@ async function copyCode() {
   }
 }
 
-const SHORTCUT_URL = 'https://pockettranscript.up.railway.app/get-transcript.shortcut';
+// An iCloud link opens straight into Shortcuts from any browser — no file to
+// download and find. The .shortcut file stays served as a fallback.
+const SHORTCUT_URL = 'https://www.icloud.com/shortcuts/33055ad7113a441694fd839476c867fa';
 
 async function installShortcut() {
   const copied = await copyCode();
