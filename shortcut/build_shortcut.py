@@ -204,7 +204,12 @@ def ask_ai(ident, descriptor, param, **extra):
     act('setclipboard', WFInput=att(prompt))
     a = uid()
     act(ident, UUID=a, ShowWhenRun=False, AppIntentDescriptor=descriptor, **{param: tok(prompt)}, **extra)
-    act('showresult', Text=tok(out(a, 'Response')))
+    answer = out(a, 'Response')
+    # Copy the AI's answer too, so tapping Done never loses it. Only when there
+    # is one: an empty answer must not wipe the prompt already on the clipboard.
+    with If(answer, HAS_VALUE):
+        act('setclipboard', WFInput=att(answer))
+    act('showresult', Text=tok('✅ Copied. Paste it anywhere (Facebook, notes, WhatsApp…).\n\n', answer))
 
 
 CHATGPT = {'TeamIdentifier': '2DC432GLL2', 'BundleIdentifier': 'com.openai.chat',
