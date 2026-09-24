@@ -101,7 +101,9 @@ class If:
         p = dict(GroupingIdentifier=self.g, WFControlFlowMode=0, WFCondition=code,
                  WFInput=cond_input(ref))
         if value is not None:
-            p['WFConditionalActionString'] = value
+            # A plain string here reads back empty on current iOS/macOS ("Please
+            # choose a value for each parameter in this action").
+            p['WFConditionalActionString'] = tok(value) if isinstance(value, str) else value
         self.start = p
 
     def __enter__(self):
@@ -121,13 +123,18 @@ def stop_with(title, *message):
     act('exit')
 
 
-IS, CONTAINS, HAS_VALUE = 4, 99, 100
+HAS_VALUE = 100
 
 # 0. The device code, typed in once when the shortcut is added.
 code = text('PASTE-YOUR-CODE-HERE')
 CODE_INDEX = len(actions) - 1
 set_var('Code', code)
 GRAB = tok(f'{BASE}/api/grab?deviceId=', var('Code'))
+
+# NOTE: every check below is "has any value". Text comparisons ("is",
+# "contains") read back EMPTY on current iOS/macOS and stop the shortcut with
+# "Please choose a value for each parameter in this action" — found by
+# bisecting on the Mac, 24 Sep 2026. The server sends flags to test instead.
 
 # 1. What was shared? A link (maybe inside a caption) or a file.
 links = uid()
@@ -140,20 +147,10 @@ with If(var('Links'), HAS_VALUE) as branch:
         WFJSONValues=dict_field([('url', tok(var('Links')))]), ShowWhenRun=False)
     set_var('Start', out(r, 'Contents of URL'))
     branch.otherwise()
-    # A video (screen recording, camera clip) goes up as sound only — a fraction
-    # of the size. Voice notes and audio files go up as they are.
-    ext = uid()
-    act('properties.files', UUID=ext, WFContentItemPropertyName='File Extension', WFInput=att(INPUT))
-    videos = text('mov MOV mp4 MP4 m4v M4V')
-    with If(videos, CONTAINS, tok(out(ext, 'File Extension'))) as vid:
-        enc = uid()
-        act('encodemedia', UUID=enc, WFMedia=att(INPUT), WFMediaAudioOnly=True)
-        set_var('Upload', out(enc, 'Encoded Media'))
-        vid.otherwise()
-        set_var('Upload', INPUT)
+    # A recording goes up as it is; the server keeps only the sound.
     r = uid()
     act('downloadurl', UUID=r, WFURL=GRAB, WFHTTPMethod='POST', WFHTTPBodyType='File',
-        WFRequestVariable=tok(var('Upload')), ShowWhenRun=False)
+        WFRequestVariable=tok(INPUT), ShowWhenRun=False)
     set_var('Start', out(r, 'Contents of URL'))
 
 err = get_key('error', 'Start')
@@ -162,69 +159,70 @@ with If(err, HAS_VALUE):
 set_var('JobId', get_key('id', 'Start'))
 
 # 2. Wait for the words. Each check holds up to 40s on the server, so 30
-#    rounds covers ~20 minutes; once it's done the rest are skipped.
-set_var('State', text('working'))
+#    rounds covers ~20 minutes. The server answers `pending` until it's done;
+#    once that's gone the remaining rounds do nothing.
+set_var('Pending', text('yes'))
 rg = uid()
 act('repeat.count', GroupingIdentifier=rg, WFControlFlowMode=0, WFRepeatCount=30)
-with If(var('State'), IS, 'working'):
+with If(var('Pending'), HAS_VALUE):
     p = uid()
     act('downloadurl', UUID=p, WFHTTPMethod='GET', ShowWhenRun=False,
         WFURL=tok(f'{BASE}/api/grab/', var('JobId'), '?deviceId=', var('Code')))
     set_var('Result', out(p, 'Contents of URL'))
-    set_var('State', get_key('state', 'Result'))
+    set_var('Pending', get_key('pending', 'Result'))
 act('repeat.count', GroupingIdentifier=rg, WFControlFlowMode=2, UUID=uid())
 
-with If(var('State'), IS, 'error'):
-    stop_with('No transcript', get_key('error', 'Result'))
-with If(var('State'), IS, 'working'):
+failed = get_key('error', 'Result')
+with If(failed, HAS_VALUE):
+    stop_with('No transcript', failed)
+with If(var('Pending'), HAS_VALUE):
     stop_with('Still working',
               "It's a long one. It will be waiting in PocketTranscript (pocket.99dfy.com) when it's done.")
 
 # 3. The transcript is on the clipboard no matter what happens next.
 set_var('Transcript', get_key('transcript', 'Result'))
 act('setclipboard', WFInput=att(var('Transcript')))
-words = get_key('words', 'Result')
 
-dests = uid()
-act('list', UUID=dests, WFItems=['Ask ChatGPT', 'Ask Claude', 'Just copy it'])
-pick = uid()
-act('choosefromlist', UUID=pick, WFInput=att(out(dests, 'List')),
-    WFChooseFromListActionPrompt=tok('Got it: ', words, ' words. What now?'))
-set_var('Dest', out(pick, 'Chosen Item'))
 
-with If(var('Dest'), IS, 'Just copy it'):
-    act('notification', WFNotificationActionTitle='Transcript copied',
-        WFNotificationActionBody=tok('Paste it anywhere.'))
-    act('exit')
-
-# 4. What should the AI do with it?
-choice = uid()
-act('choosefromlist', UUID=choice, WFInput=att(get_key('prompts', 'Result')),
-    WFChooseFromListActionPrompt='What should it do?')
-set_var('Instruction', out(choice, 'Chosen Item'))
-with If(var('Instruction'), CONTAINS, 'Type my own'):
-    own = uid()
-    act('ask', UUID=own, WFAskActionPrompt='What should it do with the transcript?', WFInputType='Text')
-    set_var('Instruction', out(own, 'Provided Input'))
-
-prompt = text(var('Instruction'), '\n\nHere is the transcript:\n\n', var('Transcript'))
-# Backup: if the AI app hiccups, the full prompt is ready to paste.
-act('setclipboard', WFInput=att(prompt))
-
-with If(var('Dest'), IS, 'Ask ChatGPT') as ai:
+def ask_ai(ident, descriptor, param, **extra):
+    """Pick an instruction, build the prompt, hand it to the app, show the answer."""
+    choice = uid()
+    act('choosefromlist', UUID=choice, WFInput=att(get_key('prompts', 'Result')),
+        WFChooseFromListActionPrompt='What should it do?')
+    set_var('Instruction', out(choice, 'Chosen Item'))
+    # "Type my own" is the one choice the server's `custom` map knows.
+    own_flag = uid()
+    act('getvalueforkey', UUID=own_flag, WFDictionaryKey=tok(var('Instruction')),
+        WFInput=att(get_key('custom', 'Result')))
+    with If(out(own_flag, 'Dictionary Value'), HAS_VALUE):
+        own = uid()
+        act('ask', UUID=own, WFAskActionPrompt='What should it do with the transcript?', WFInputType='Text')
+        set_var('Instruction', out(own, 'Provided Input'))
+    prompt = text(var('Instruction'), '\n\nHere is the transcript:\n\n', var('Transcript'))
+    # Backup: if the AI app hiccups, the full prompt is ready to paste.
+    act('setclipboard', WFInput=att(prompt))
     a = uid()
-    act('com.openai.chat.AskIntent', UUID=a, ShowWhenRun=False, newChat=True,
-        AppIntentDescriptor={'TeamIdentifier': '2DC432GLL2', 'BundleIdentifier': 'com.openai.chat',
-                             'Name': 'ChatGPT', 'AppIntentIdentifier': 'AskIntent'},
-        prompt=tok(prompt))
+    act(ident, UUID=a, ShowWhenRun=False, AppIntentDescriptor=descriptor, **{param: tok(prompt)}, **extra)
     act('showresult', Text=tok(out(a, 'Response')))
-    ai.otherwise()
-    c = uid()
-    act('com.anthropic.claude.ClaudeAppIntentsExtension', UUID=c, ShowWhenRun=False,
-        AppIntentDescriptor={'TeamIdentifier': 'Q6L2SF6YDW', 'BundleIdentifier': 'com.anthropic.claude',
-                             'Name': 'Claude', 'AppIntentIdentifier': 'ClaudeAppIntentsExtension'},
-        message=tok(prompt))
-    act('showresult', Text=tok(out(c, 'Response')))
+
+
+CHATGPT = {'TeamIdentifier': '2DC432GLL2', 'BundleIdentifier': 'com.openai.chat',
+           'Name': 'ChatGPT', 'AppIntentIdentifier': 'AskIntent'}
+CLAUDE = {'TeamIdentifier': 'Q6L2SF6YDW', 'BundleIdentifier': 'com.anthropic.claude',
+          'Name': 'Claude', 'AppIntentIdentifier': 'ClaudeAppIntentsExtension'}
+
+mg = uid()
+MENU = ['Ask ChatGPT', 'Ask Claude', 'Just copy it']
+act('choosefrommenu', GroupingIdentifier=mg, WFControlFlowMode=0,
+    WFMenuPrompt='Transcript ready (also copied). What now?', WFMenuItems=MENU)
+act('choosefrommenu', GroupingIdentifier=mg, WFControlFlowMode=1, WFMenuItemTitle='Ask ChatGPT')
+ask_ai('com.openai.chat.AskIntent', CHATGPT, 'prompt', newChat=True)
+act('choosefrommenu', GroupingIdentifier=mg, WFControlFlowMode=1, WFMenuItemTitle='Ask Claude')
+ask_ai('com.anthropic.claude.ClaudeAppIntentsExtension', CLAUDE, 'message')
+act('choosefrommenu', GroupingIdentifier=mg, WFControlFlowMode=1, WFMenuItemTitle='Just copy it')
+act('notification', WFNotificationActionTitle='Transcript copied',
+    WFNotificationActionBody=tok('Paste it anywhere.'))
+act('choosefrommenu', GroupingIdentifier=mg, WFControlFlowMode=2, UUID=uid())
 
 shortcut = {
     'WFWorkflowActions': actions,

@@ -419,6 +419,10 @@ function rawUpload(req, res, next) {
 
 // The instructions offered on the phone after the transcript arrives. They live
 // here, not in the Shortcut, so they can change without reinstalling it.
+// The Shortcut only tests "has any value" (its text comparisons read back empty
+// on current iOS), so answers carry flags: `pending` while working, and
+// `custom` maps the type-your-own choice to "yes".
+const TYPE_OWN = '✏️ Type my own instruction';
 const PROMPTS = [
   'Summarise this in simple words',
   'Give me the key points and the action steps',
@@ -426,7 +430,7 @@ const PROMPTS = [
   'Turn this into a social media post',
   'Write this up as a clean, readable article',
   'Translate this into Bangla',
-  '✏️ Type my own instruction',
+  TYPE_OWN,
 ];
 
 function newServerJob(d, fields) {
@@ -570,10 +574,11 @@ app.get('/api/grab/:id', async (req, res) => {
       words: transcript.split(/\s+/).length,
       transcript: head ? `${head}\n\n${transcript}` : transcript,
       prompts: PROMPTS,
+      custom: { [TYPE_OWN]: 'yes' },
     });
   }
   if (job.status === 'error') return res.json({ ok: true, state: 'error', error: job.error });
-  res.json({ ok: true, state: 'working' });
+  res.json({ ok: true, state: 'working', pending: 'yes' });
 });
 
 // ============================================================= static =======
