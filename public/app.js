@@ -289,7 +289,7 @@ async function copyCode() {
 
 // An iCloud link opens straight into Shortcuts from any browser — no file to
 // download and find. The .shortcut file stays served as a fallback.
-const SHORTCUT_URL = 'https://www.icloud.com/shortcuts/33055ad7113a441694fd839476c867fa';
+const SHORTCUT_URL = 'https://www.icloud.com/shortcuts/424cfda5c18849868e2c9ff48cd043f7';
 
 async function installShortcut() {
   const copied = await copyCode();
