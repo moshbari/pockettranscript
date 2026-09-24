@@ -594,6 +594,12 @@ app.post('/api/grab', rawUpload, upload.single('file'), (req, res) => {
   res.json({ ok: true, id: job.id });
 });
 
+function previewOf(text, max = 220) {
+  const t = String(text || '').replace(/\s+/g, ' ').trim();
+  if (t.length <= max) return t;
+  return t.slice(0, max).replace(/\s+\S*$/, '') + '…';
+}
+
 app.get('/api/grab/:id', async (req, res) => {
   const given = String(req.query.deviceId || '').trim().toLowerCase();
   const d = getDevice(isValidDeviceId(given) ? resolveId(given) : ANON_ID);
@@ -617,6 +623,9 @@ app.get('/api/grab/:id', async (req, res) => {
       title: job.title || '',
       words: transcript.split(/\s+/).length,
       transcript: head ? `${head}\n\n${transcript}` : transcript,
+      // A few lines for the Shortcut's menu. The whole thing there pushed the
+      // ChatGPT/Claude buttons off an iPhone screen.
+      preview: previewOf(transcript),
       prompts: PROMPTS,
       custom: { [TYPE_OWN]: 'yes' },
     });

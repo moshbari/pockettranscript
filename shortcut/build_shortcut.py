@@ -213,15 +213,19 @@ CLAUDE = {'TeamIdentifier': 'Q6L2SF6YDW', 'BundleIdentifier': 'com.anthropic.cla
           'Name': 'Claude', 'AppIntentIdentifier': 'ClaudeAppIntentsExtension'}
 
 mg = uid()
-MENU = ['Ask ChatGPT', 'Ask Claude', 'Just copy it']
+MENU = ['Ask ChatGPT', 'Ask Claude', '📄 Read it all', 'Just copy it']
+set_var('Preview', get_key('preview', 'Result'))
 act('choosefrommenu', GroupingIdentifier=mg, WFControlFlowMode=0,
-    # The transcript itself fills the menu's message area (scrolls when long);
-    # it is already on the clipboard.
-    WFMenuPrompt=tok('✅ Copied. What now?\n\n', var('Transcript')), WFMenuItems=MENU)
+    # Only a short preview here: the whole transcript pushed the buttons off an
+    # iPhone screen. "Read it all" opens the full text on its own screen.
+    WFMenuPrompt=tok('✅ Copied. What now?\n\n', var('Preview')), WFMenuItems=MENU)
 act('choosefrommenu', GroupingIdentifier=mg, WFControlFlowMode=1, WFMenuItemTitle='Ask ChatGPT')
 ask_ai('com.openai.chat.AskIntent', CHATGPT, 'prompt', newChat=True)
 act('choosefrommenu', GroupingIdentifier=mg, WFControlFlowMode=1, WFMenuItemTitle='Ask Claude')
 ask_ai('com.anthropic.claude.ClaudeAppIntentsExtension', CLAUDE, 'message')
+act('choosefrommenu', GroupingIdentifier=mg, WFControlFlowMode=1, WFMenuItemTitle='📄 Read it all')
+# Quick Look: full screen, scrolls, and any part can be selected and copied.
+act('previewdocument', WFInput=att(var('Transcript')))
 act('choosefrommenu', GroupingIdentifier=mg, WFControlFlowMode=1, WFMenuItemTitle='Just copy it')
 act('notification', WFNotificationActionTitle='Transcript copied',
     WFNotificationActionBody=tok('Paste it anywhere.'))
