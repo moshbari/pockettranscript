@@ -219,7 +219,7 @@ async function submitUrl() {
     showError($('mainError'), e.message);
   } finally {
     $('goBtn').disabled = false;
-    $('goBtn').textContent = 'Get the transcript';
+    $('goBtn').textContent = '2. Get every word';
   }
 }
 
@@ -276,33 +276,8 @@ async function copyAll() {
   }
 }
 
-// ------------------------------------------------------- share button ---
-// The iPhone Shortcut asks for this phone's code once, when it's added.
-async function copyCode() {
-  try {
-    await navigator.clipboard.writeText(deviceId);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-// An iCloud link opens straight into Shortcuts from any browser — no file to
-// download and find. The .shortcut file stays served as a fallback.
-const SHORTCUT_URL = 'https://www.icloud.com/shortcuts/424cfda5c18849868e2c9ff48cd043f7';
-
-async function installShortcut() {
-  const copied = await copyCode();
-  toast(copied ? 'Code copied ✓ Paste it when asked' : 'Copy your code below first');
-  // Fetched from the second address on purpose: a different origin means this
-  // app's service worker can't touch it — through the worker, iPhone Safari
-  // saved it as "Get Transcript.shortcut.html" and Shortcuts wouldn't open it.
-  setTimeout(() => { location.href = SHORTCUT_URL; }, copied ? 900 : 2500);
-}
-
 // -------------------------------------------------------------- startup ---
 function startMain() {
-  $('copyCodeBtn').textContent = deviceId;
   show('mainScreen');
   loop();
 }
@@ -321,11 +296,6 @@ function wireUp() {
       const t = await navigator.clipboard.readText();
       if (t) { $('urlInput').value = t.trim(); toast('Pasted'); }
     } catch { toast('Hold the box and tap Paste'); }
-  });
-
-  $('installShortcutBtn').addEventListener('click', installShortcut);
-  $('copyCodeBtn').addEventListener('click', async () => {
-    toast((await copyCode()) ? 'Code copied ✓' : 'Hold the code to copy it');
   });
 
   $('statusPill').addEventListener('click', refresh);

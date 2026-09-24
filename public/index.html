@@ -66,31 +66,37 @@
     </div>
   </div>
 
+  <div class="card welcome">
+    <h1 class="welcome-title">Get the words from any YouTube video</h1>
+    <p class="welcome-body">Paste a YouTube link below and tap the button. In a few seconds you get <b>every word said in the video</b>,
+      ready to read, copy, or give to ChatGPT or Claude. No typing, no watching the whole thing.</p>
+  </div>
+
   <div class="card">
-    <label for="urlInput" class="label">YouTube link</label>
+    <label for="urlInput" class="label">1. Paste a YouTube link</label>
     <div class="input-row">
       <input id="urlInput" class="text-input" type="url" inputmode="url"
              autocomplete="off" autocapitalize="off" spellcheck="false"
              placeholder="https://youtu.be/…">
       <button id="pasteBtn" class="btn btn-ghost" title="Paste from clipboard">Paste</button>
     </div>
-    <button id="goBtn" class="btn btn-primary btn-lg">Get the transcript</button>
+    <button id="goBtn" class="btn btn-primary btn-lg">2. Get every word</button>
+    <p class="hint">Copy the link in the YouTube app: tap <b>Share → Copy link</b>.</p>
     <p id="mainError" class="error hidden"></p>
   </div>
 
   <div class="card sharecard">
-    <div class="share-title">⚡ The Share button</div>
-    <p class="share-body">Get the words out of <b>anything</b> on this phone: a YouTube, TikTok, Instagram or Facebook link,
-      a voice note, a podcast file, or a screen recording. Then send them straight to ChatGPT or Claude.</p>
-    <button id="installShortcutBtn" class="btn btn-primary btn-lg">Install the Share button</button>
-    <p class="share-hint">This copies your code first. When your iPhone asks for it, tap the box and choose <b>Paste</b>.
-      Your code: <button id="copyCodeBtn" class="linkbtn code-chip" type="button"></button></p>
+    <div class="share-title">⚡ Even easier: a Share button on your iPhone</div>
+    <p class="share-body">Skip the copy-and-paste. Watching something on Facebook, Instagram, TikTok, YouTube, or a voice note?
+      Just tap <b>Share → Get Transcript</b>, and send the words straight to ChatGPT or Claude.</p>
+    <a class="btn btn-primary btn-lg" href="/share">Get the Share button (free)</a>
+    <p class="share-hint">Takes one minute. The next page shows you each step.</p>
   </div>
 
   <section id="jobsSection" class="jobs hidden">
     <div class="section-head">
-      <h2 class="section-title">Recent</h2>
-      <span class="section-note">kept 7 days</span>
+      <h2 class="section-title">Your transcripts</h2>
+      <span class="section-note">tap one to read or copy · kept 7 days</span>
     </div>
     <div id="jobsList"></div>
   </section>

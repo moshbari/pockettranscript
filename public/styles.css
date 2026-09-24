@@ -166,3 +166,11 @@ body{
 .share-hint b{color:var(--ink-dim)}
 .code-chip{font-family:ui-monospace,Menlo,monospace;font-size:12px;word-break:break-all;
   -webkit-user-select:all;user-select:all;padding:0;text-align:left}
+
+/* ---- welcome + hints ---- */
+.welcome-title{font-size:21px;line-height:1.25;margin:0 0 8px}
+.welcome-body{margin:0;color:var(--ink-dim);font-size:15px;line-height:1.5}
+.welcome-body b{color:var(--ink)}
+.hint{margin:10px 0 0;color:var(--ink-faint);font-size:13px}
+.hint b{color:var(--ink-dim)}
+.sharecard .btn{display:block;text-align:center;text-decoration:none}
