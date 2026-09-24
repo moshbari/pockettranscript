@@ -69,7 +69,12 @@ async function doPair() {
   $('pairBtn').disabled = true;
   $('pairBtn').textContent = 'Connecting…';
   try {
-    const r = await api('/api/pair', { method: 'POST', body: JSON.stringify({ code }) });
+    // If this phone already installed the Share button from /share, send its
+    // code along so the server points it at this computer (YouTube then works
+    // without reinstalling the Shortcut).
+    let shareCode = '';
+    try { shareCode = localStorage.getItem('pt.shareCode') || ''; } catch { /* private mode */ }
+    const r = await api('/api/pair', { method: 'POST', body: JSON.stringify({ code, shareCode }) });
     deviceId = r.deviceId;
     localStorage.setItem(LS_DEVICE, deviceId);
     localStorage.setItem(LS_NAME, r.name || 'Desktop');

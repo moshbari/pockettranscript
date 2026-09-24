@@ -18,6 +18,14 @@
   .works{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
   .works span{background:var(--card-2);border:1px solid var(--line);border-radius:999px;
     padding:6px 11px;font-size:13.5px;color:var(--ink-dim)}
+  .codebox{display:flex;gap:10px;align-items:center;background:var(--card-2);border:2px solid var(--accent);
+    border-radius:14px;padding:12px 12px 12px 14px;margin-top:6px}
+  .code-text{flex:1;min-width:0;font-family:ui-monospace,Menlo,monospace;font-size:17px;letter-spacing:.04em;
+    word-break:break-all;line-height:1.45;-webkit-user-select:all;user-select:all;color:var(--ink)}
+  .copy-btn{flex:none;min-width:84px}
+  .toast2{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ok);color:#04210f;
+    font-weight:700;padding:12px 18px;border-radius:999px;opacity:0;transition:opacity .2s;pointer-events:none}
+  .toast2.on{opacity:1}
   .mock{display:block;width:100%;max-width:300px;margin:12px auto 0}
   .small{font-size:13.5px;color:var(--ink-faint);line-height:1.55}
   .small a{color:var(--accent)}
@@ -46,16 +54,43 @@
 
   <!-- STEP 1 -->
   <section class="step">
-    <div class="step-head"><span class="step-num">1</span><h2>Add it to your iPhone</h2></div>
-    <p>Open this page <b>on your iPhone</b> and tap the button.</p>
-    <a class="btn btn-primary btn-lg big-add" href="https://www.icloud.com/shortcuts/33055ad7113a441694fd839476c867fa">＋ Add to my iPhone</a>
-    <p class="after-tap">The Shortcuts app opens. Tap <b>Add Shortcut</b>.<br>
-      If it asks for a code, <b>just leave it empty</b> and tap <b>Add Shortcut</b> again. That's it.</p>
+    <div class="step-head"><span class="step-num">1</span><h2>Your code</h2></div>
+    <p>This is <b>your own code</b>. The iPhone asks for it once, while adding the button.</p>
+    <div class="codebox">
+      <div id="codeText" class="code-text">…</div>
+      <button id="copyCode" class="btn btn-ghost copy-btn" type="button">Copy</button>
+    </div>
+    <p class="small">It stays here. Come back to this page any time to copy it again.</p>
+  </section>
+
+  <section class="step">
+    <div class="step-head"><span class="step-num">2</span><h2>Add the button to your iPhone</h2></div>
+    <p>Open this page <b>on your iPhone</b> and tap:</p>
+    <button id="addBtn" class="btn btn-primary btn-lg big-add" type="button">Copy my code &amp; add to iPhone</button>
+    <p class="after-tap">The Shortcuts app opens with this screen. <b>Tap the box, tap Paste</b>, then tap <b>Add Shortcut</b>:</p>
+    <svg class="mock" viewBox="0 0 300 330" role="img" aria-label="The Configure This Shortcut screen: tap the box, choose Paste, then Add Shortcut">
+      <rect x="1" y="1" width="298" height="328" rx="22" fill="#fff" stroke="#26313d"/>
+      <g font-family="-apple-system,system-ui,sans-serif" fill="#1c1c1e">
+        <text x="150" y="44" font-size="17" font-weight="700" text-anchor="middle">Configure This Shortcut</text>
+        <text x="20" y="78" font-size="12.5">Paste your code here: tap this box,</text>
+        <text x="20" y="95" font-size="12.5">then Paste.</text>
+        <rect x="14" y="110" width="272" height="42" rx="8" fill="#eef8ff" stroke="#38bdf8" stroke-width="3"/>
+        <text x="26" y="136" font-size="13" fill="#8e8e93">Text</text>
+        <rect x="150" y="160" width="74" height="30" rx="8" fill="#1c1c1e"/>
+        <text x="187" y="180" font-size="13" fill="#fff" text-anchor="middle">Paste</text>
+        <path d="M187 160 l-7 -8 h14 z" fill="#1c1c1e"/>
+        <text x="236" y="180" font-size="12" fill="#ef4444" font-weight="700">← 1</text>
+        <rect x="24" y="258" width="252" height="40" rx="20" fill="#2f7cf6"/>
+        <text x="150" y="283" font-size="15" fill="#fff" font-weight="600" text-anchor="middle">Add Shortcut</text>
+        <text x="150" y="246" font-size="12" fill="#ef4444" font-weight="700" text-anchor="middle">2 ↓</text>
+      </g>
+    </svg>
+    <p class="small">No Paste bubble? Tap the box once more. Lost the code? Come back here, it's in the box above.</p>
   </section>
 
   <!-- STEP 2 -->
   <section class="step">
-    <div class="step-head"><span class="step-num">2</span><h2>Use it</h2></div>
+    <div class="step-head"><span class="step-num">3</span><h2>Use it</h2></div>
     <p>On any video, tap <b>Share</b>, scroll down, and tap <b>Get Transcript</b>.</p>
     <svg class="mock" viewBox="0 0 300 250" role="img" aria-label="The Share menu with Get Transcript at the bottom">
       <rect x="1" y="1" width="298" height="248" rx="22" fill="#f2f2f7" stroke="#26313d"/>
@@ -72,7 +107,7 @@
 
   <!-- STEP 3 -->
   <section class="step">
-    <div class="step-head"><span class="step-num">3</span><h2>Pick where it goes</h2></div>
+    <div class="step-head"><span class="step-num">4</span><h2>Pick where it goes</h2></div>
     <p>A few seconds later you choose <b>Ask ChatGPT</b>, <b>Ask Claude</b> or <b>Just copy it</b>, then what it should do:
       summarise, key points and action steps, a social post, translate to Bangla, or your own words.</p>
     <p class="small">For ChatGPT or Claude, have that app on your iPhone and be logged in. The words are always copied too, so you can paste them anywhere.</p>
@@ -87,13 +122,47 @@
   <details class="card">
     <summary>Want YouTube too?</summary>
     <p>YouTube only hands its captions to a real computer, so YouTube needs a free helper in Chrome on your Mac or PC.
-      <a href="/install">Set up the computer helper</a>, connect your phone at <a href="/">pocket.99dfy.com</a>,
-      then tap <b>Install the Share button</b> there. It fills in your code for you.</p>
+      <a href="/install">Set up the computer helper</a>, then connect this phone at <a href="/">pocket.99dfy.com</a>
+      (in this same browser). Your Share button starts doing YouTube too. Nothing to reinstall.</p>
   </details>
 
   <p class="small">Free: up to 20 transcripts a day. Transcripts are deleted from our server after a day.
     iPhone only for now.</p>
 
 </main>
+<div id="toast2" class="toast2"></div>
+
+<script>
+// Every visitor gets their own code, kept in this browser so it's the same
+// every time they come back. If this browser is already connected to a
+// computer (the PocketTranscript app), use that code: YouTube works at once.
+const ICLOUD = 'https://www.icloud.com/shortcuts/33055ad7113a441694fd839476c867fa';
+function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch { return null; } }
+let code = store('pt.deviceId') || store('pt.shareCode');
+if (!/^[a-f0-9]{32}$/.test(code || '')) {
+  const b = new Uint8Array(16); crypto.getRandomValues(b);
+  code = [...b].map((x) => x.toString(16).padStart(2, '0')).join('');
+  store('pt.shareCode', code);
+}
+// Shown in groups of 4 so it's easy on the eye; copied without the spaces.
+document.getElementById('codeText').textContent = code.match(/.{4}/g).join(' ');
+
+function toast(msg) {
+  const t = document.getElementById('toast2');
+  t.textContent = msg; t.classList.add('on');
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2200);
+}
+async function copy() {
+  try { await navigator.clipboard.writeText(code); return true; } catch { return false; }
+}
+document.getElementById('copyCode').addEventListener('click', async () => {
+  toast((await copy()) ? 'Code copied ✓' : 'Press and hold the code to copy it');
+});
+document.getElementById('addBtn').addEventListener('click', async () => {
+  const ok = await copy();
+  toast(ok ? 'Code copied ✓ Paste it on the next screen' : 'Copy the code above first');
+  setTimeout(() => { location.href = ICLOUD; }, ok ? 1100 : 2600);
+});
+</script>
 </body>
 </html>

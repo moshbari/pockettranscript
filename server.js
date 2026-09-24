@@ -48,6 +48,12 @@ const ANON_MAX_JOBS = 5000;
 const ANON_DAILY_LIMIT = Number(process.env.ANON_DAILY_LIMIT || 20);
 const anonUse = new Map();   // ip -> { day, count }
 
+// The /share page hands each visitor a code of their own for the Shortcut.
+// If they later connect a computer, that code is pointed at the computer's
+// id here, so YouTube starts working without reinstalling the Shortcut.
+const aliases = new Map();   // share code -> desktop deviceId
+const resolveId = (id) => aliases.get(id) || id;
+
 // ---------------------------------------------------------------- disk ----
 // Transcripts have to outlive a redeploy, or "kept for 7 days" is a lie: every
 // push would silently empty the phone's list. Railway gives the service a
@@ -62,7 +68,7 @@ function serialise() {
   for (const [id, d] of devices) {
     out[id] = { name: d.name, lastSeen: d.lastSeen, jobs: [...d.jobs.values()] };
   }
-  return JSON.stringify({ version: 1, savedAt: now(), devices: out });
+  return JSON.stringify({ version: 1, savedAt: now(), devices: out, aliases: Object.fromEntries(aliases) });
 }
 
 function saveNow() {
@@ -112,7 +118,8 @@ function load() {
       }
       devices.set(id, dev);
     }
-    console.log(`[store] loaded ${devices.size} device(s), ${jobs} transcript(s)`);
+    for (const [from, to] of Object.entries(raw.aliases || {})) aliases.set(from, to);
+    console.log(`[store] loaded ${devices.size} device(s), ${jobs} transcript(s), ${aliases.size} alias(es)`);
   } catch (e) {
     console.error('[store] could not load, starting empty:', e.message);
   }
@@ -298,6 +305,12 @@ app.post('/api/pair', (req, res) => {
   }
   pairCodes.delete(code);   // one use only
   const d = getDevice(entry.deviceId);
+  // A phone that already has a Share-button code: route it to this computer.
+  const shareCode = String((req.body && req.body.shareCode) || '').toLowerCase();
+  if (isValidDeviceId(shareCode) && shareCode !== entry.deviceId) {
+    aliases.set(shareCode, entry.deviceId);
+    save();
+  }
   res.json({ ok: true, deviceId: entry.deviceId, name: d.name, online: now() - d.lastSeen < ONLINE_MS });
 });
 
@@ -522,12 +535,14 @@ app.post('/api/grab', rawUpload, upload.single('file'), (req, res) => {
   // your-computer works without one.
   const given = String(req.query.deviceId || (req.body && req.body.deviceId) || '').trim().toLowerCase();
   const anon = !isValidDeviceId(given);
-  const d = getDevice(anon ? ANON_ID : given);
+  const d = getDevice(anon ? ANON_ID : resolveId(given));
+  // Only a code with a computer behind it skips the daily cap.
+  const limited = anon || !d.lastSeen;
 
   // Count a no-code user's paid transcripts (files and non-YouTube links).
   const bodyUrl = firstUrl(req.body && (req.body.url || req.body.text));
   const paid = (req.file && req.file.size > 0) || (bodyUrl && !extractYtId(bodyUrl));
-  if (anon && paid) {
+  if (limited && paid) {
     const day = new Date().toISOString().slice(0, 10);
     const u = anonUse.get(req.ip);
     const use = u && u.day === day ? u : { day, count: 0 };
@@ -565,7 +580,7 @@ app.post('/api/grab', rawUpload, upload.single('file'), (req, res) => {
     const job = newServerJob(d, { url: `https://www.youtube.com/watch?v=${videoId}`, videoId });
     runLink(job).then(() => {
       if (job.status === 'error') {
-        job.error = anon
+        job.error = !d.lastSeen
           ? "YouTube didn't hand this one over. YouTube needs the free computer helper: see pocket.99dfy.com/share"
           : 'Your computer is asleep, and YouTube only gives transcripts to it. Wake the Mac (with Chrome open) and try again.';
         save();
@@ -581,7 +596,7 @@ app.post('/api/grab', rawUpload, upload.single('file'), (req, res) => {
 
 app.get('/api/grab/:id', async (req, res) => {
   const given = String(req.query.deviceId || '').trim().toLowerCase();
-  const d = getDevice(isValidDeviceId(given) ? given : ANON_ID);
+  const d = getDevice(isValidDeviceId(given) ? resolveId(given) : ANON_ID);
   const job = d.jobs.get(req.params.id);
   if (!job) return res.status(404).json({ ok: false, state: 'error', error: 'That transcript is no longer on the server.' });
 

@@ -238,7 +238,7 @@ shortcut = {
         'Category': 'Parameter',
         'ParameterKey': 'WFTextActionText',
         'DefaultValue': '',
-        'Text': 'Optional. Only if you use the free computer helper for YouTube: paste your code here. Otherwise leave it empty and tap Add Shortcut.',
+        'Text': 'Paste your code here: tap this box, then Paste. It was copied for you on the Get Transcript page. Lost it? Open pocket.99dfy.com/share',
     }],
     'WFWorkflowOutputContentItemClasses': [],
     'WFWorkflowTypes': ['ActionExtension'],   # shows up in the Share menu
