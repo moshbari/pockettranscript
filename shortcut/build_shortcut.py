@@ -7,7 +7,8 @@ Writes shortcut/Get Transcript.unsigned.shortcut; sign it on a Mac with
   shortcuts sign --mode anyone -i <unsigned> -o public/get-transcript.shortcut
 
 The file holds no device code — it's public. On install, iOS asks for the
-code once (an import question); the phone app has a button that copies it.
+code once (an import question). It's optional: blank works for everything
+except YouTube-through-your-computer.
 
 Flow: Share a link or a file (or copy a link and just run it) → the server
 turns it into text → pick Ask ChatGPT / Ask Claude / Just copy it → pick an
@@ -126,7 +127,7 @@ def stop_with(title, *message):
 HAS_VALUE = 100
 
 # 0. The device code, typed in once when the shortcut is added.
-code = text('PASTE-YOUR-CODE-HERE')
+code = text('')   # blank = no computer; the server serves it without a code
 CODE_INDEX = len(actions) - 1
 set_var('Code', code)
 GRAB = tok(f'{BASE}/api/grab?deviceId=', var('Code'))
@@ -237,7 +238,7 @@ shortcut = {
         'Category': 'Parameter',
         'ParameterKey': 'WFTextActionText',
         'DefaultValue': '',
-        'Text': 'Paste your PocketTranscript code (open pocket.99dfy.com, tap "Share button", it copies it for you).',
+        'Text': 'Optional. Only if you use the free computer helper for YouTube: paste your code here. Otherwise leave it empty and tap Add Shortcut.',
     }],
     'WFWorkflowOutputContentItemClasses': [],
     'WFWorkflowTypes': ['ActionExtension'],   # shows up in the Share menu

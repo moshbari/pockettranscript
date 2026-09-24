@@ -21,6 +21,7 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.set('trust proxy', true);   // Railway's edge: req.ip is the phone, not the proxy
 app.use(express.json({ limit: '12mb' }));   // transcripts of long videos are chunky
 
 // ---------------------------------------------------------------- state ----
@@ -37,6 +38,15 @@ const MAX_JOBS    = 300;                // per-device backstop so one batch can'
 const DEVICE_TTL_MS = 30 * 24 * 3600 * 1000;
 
 const now = () => Date.now();
+
+// People who install the Share button without a computer code all share one
+// bucket. Their job ids (16 random hex) are what keeps them apart.
+const ANON_ID = '0'.repeat(32);
+const ANON_KEEP_MS = 24 * 3600 * 1000;
+const ANON_MAX_JOBS = 5000;
+// Non-YouTube transcripts cost Whisper money, so no-code users get a daily cap.
+const ANON_DAILY_LIMIT = Number(process.env.ANON_DAILY_LIMIT || 20);
+const anonUse = new Map();   // ip -> { day, count }
 
 // ---------------------------------------------------------------- disk ----
 // Transcripts have to outlive a redeploy, or "kept for 7 days" is a lie: every
@@ -122,7 +132,9 @@ function getDevice(deviceId, { name } = {}) {
 }
 
 function isValidDeviceId(id) {
-  return typeof id === 'string' && /^[a-f0-9]{32}$/.test(id);
+  // The shared no-code bucket is never a valid id from outside, so nobody can
+  // list it through /api/status or /api/jobs.
+  return typeof id === 'string' && /^[a-f0-9]{32}$/.test(id) && id !== ANON_ID;
 }
 
 function jobSummary(j) {
@@ -144,10 +156,12 @@ function recentJobs(d) {
 }
 
 function trimJobs(d) {
-  const cutoff = now() - KEEP_MS;
+  // The shared no-code bucket holds strangers' transcripts: a day, not a week.
+  const anon = d === devices.get(ANON_ID);
+  const cutoff = now() - (anon ? ANON_KEEP_MS : KEEP_MS);
   for (const j of [...d.jobs.values()]) if (j.createdAt < cutoff) d.jobs.delete(j.id);
   const all = [...d.jobs.values()].sort((a, b) => b.createdAt - a.createdAt);
-  for (const j of all.slice(MAX_JOBS)) d.jobs.delete(j.id);
+  for (const j of all.slice(anon ? ANON_MAX_JOBS : MAX_JOBS)) d.jobs.delete(j.id);
 }
 
 // Hand a waiting long-poll its job the instant one is queued, so a phone
@@ -504,12 +518,26 @@ function firstUrl(s) {
 }
 
 app.post('/api/grab', rawUpload, upload.single('file'), (req, res) => {
-  const deviceId = String(req.query.deviceId || (req.body && req.body.deviceId) || '');
-  if (!isValidDeviceId(deviceId)) {
-    if (req.file) fs.rm(req.file.path, { force: true }, () => {});
-    return res.status(400).json({ ok: false, error: 'This shortcut is not linked to your account.' });
+  // No code (left blank on install) is fine: everything but YouTube-through-
+  // your-computer works without one.
+  const given = String(req.query.deviceId || (req.body && req.body.deviceId) || '').trim().toLowerCase();
+  const anon = !isValidDeviceId(given);
+  const d = getDevice(anon ? ANON_ID : given);
+
+  // Count a no-code user's paid transcripts (files and non-YouTube links).
+  const bodyUrl = firstUrl(req.body && (req.body.url || req.body.text));
+  const paid = (req.file && req.file.size > 0) || (bodyUrl && !extractYtId(bodyUrl));
+  if (anon && paid) {
+    const day = new Date().toISOString().slice(0, 10);
+    const u = anonUse.get(req.ip);
+    const use = u && u.day === day ? u : { day, count: 0 };
+    if (use.count >= ANON_DAILY_LIMIT) {
+      if (req.file) fs.rm(req.file.path, { force: true }, () => {});
+      return res.status(429).json({ ok: false, error: `That's today's ${ANON_DAILY_LIMIT} free transcripts. More tomorrow!` });
+    }
+    use.count++;
+    anonUse.set(req.ip, use);
   }
-  const d = getDevice(deviceId);
 
   if (req.file && req.file.size > 0) {
     const job = newServerJob(d, { title: req.file.originalname || 'Recording from phone' });
@@ -522,7 +550,7 @@ app.post('/api/grab', rawUpload, upload.single('file'), (req, res) => {
 
   const videoId = extractYtId(url);
   if (videoId) {
-    const macAwake = d.lastSeen > 0 && now() - d.lastSeen < ONLINE_MS;
+    const macAwake = !anon && d.lastSeen > 0 && now() - d.lastSeen < ONLINE_MS;
     if (macAwake) {
       // Same path as the phone app: the Mac's extension reads the captions.
       const job = newServerJob(d, {
@@ -537,7 +565,9 @@ app.post('/api/grab', rawUpload, upload.single('file'), (req, res) => {
     const job = newServerJob(d, { url: `https://www.youtube.com/watch?v=${videoId}`, videoId });
     runLink(job).then(() => {
       if (job.status === 'error') {
-        job.error = 'Your computer is asleep, and YouTube only gives transcripts to it. Wake the Mac (with Chrome open) and try again.';
+        job.error = anon
+          ? "YouTube didn't hand this one over. YouTube needs the free computer helper: see pocket.99dfy.com/share"
+          : 'Your computer is asleep, and YouTube only gives transcripts to it. Wake the Mac (with Chrome open) and try again.';
         save();
       }
     });
@@ -550,9 +580,8 @@ app.post('/api/grab', rawUpload, upload.single('file'), (req, res) => {
 });
 
 app.get('/api/grab/:id', async (req, res) => {
-  const deviceId = String(req.query.deviceId || '');
-  if (!isValidDeviceId(deviceId)) return res.status(400).json({ ok: false, error: 'Bad deviceId' });
-  const d = getDevice(deviceId);
+  const given = String(req.query.deviceId || '').trim().toLowerCase();
+  const d = getDevice(isValidDeviceId(given) ? given : ANON_ID);
   const job = d.jobs.get(req.params.id);
   if (!job) return res.status(404).json({ ok: false, state: 'error', error: 'That transcript is no longer on the server.' });
 
