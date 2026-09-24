@@ -215,7 +215,9 @@ CLAUDE = {'TeamIdentifier': 'Q6L2SF6YDW', 'BundleIdentifier': 'com.anthropic.cla
 mg = uid()
 MENU = ['Ask ChatGPT', 'Ask Claude', 'Just copy it']
 act('choosefrommenu', GroupingIdentifier=mg, WFControlFlowMode=0,
-    WFMenuPrompt='Transcript ready (also copied). What now?', WFMenuItems=MENU)
+    # The transcript itself fills the menu's message area (scrolls when long);
+    # it is already on the clipboard.
+    WFMenuPrompt=tok('✅ Copied. What now?\n\n', var('Transcript')), WFMenuItems=MENU)
 act('choosefrommenu', GroupingIdentifier=mg, WFControlFlowMode=1, WFMenuItemTitle='Ask ChatGPT')
 ask_ai('com.openai.chat.AskIntent', CHATGPT, 'prompt', newChat=True)
 act('choosefrommenu', GroupingIdentifier=mg, WFControlFlowMode=1, WFMenuItemTitle='Ask Claude')

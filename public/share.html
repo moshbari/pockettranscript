@@ -136,7 +136,7 @@
 // Every visitor gets their own code, kept in this browser so it's the same
 // every time they come back. If this browser is already connected to a
 // computer (the PocketTranscript app), use that code: YouTube works at once.
-const ICLOUD = 'https://www.icloud.com/shortcuts/424cfda5c18849868e2c9ff48cd043f7';
+const ICLOUD = 'https://www.icloud.com/shortcuts/16dddd490acc4fa4bad54e020b200c9e';
 function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch { return null; } }
 let code = store('pt.deviceId') || store('pt.shareCode');
 if (!/^[a-f0-9]{32}$/.test(code || '')) {
