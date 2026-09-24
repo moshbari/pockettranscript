@@ -2,7 +2,7 @@
 // The shell is cached; every /api/ call goes straight to the network, because a
 // cached "your computer is awake" would be a lie.
 
-const CACHE = 'pocket-transcript-v3';
+const CACHE = 'pocket-transcript-v4';
 const SHELL = ['/', '/index.html', '/styles.css', '/app.js',
                '/install', '/install.css', '/install.js',
                '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
@@ -23,6 +23,7 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.origin !== location.origin) return;
   if (url.pathname.startsWith('/api/')) return;   // never cache status or transcripts
+  if (url.pathname.endsWith('.shortcut')) return; // a download handed back by the worker lands as .html on iPhone
 
   // Network first so a deployed change shows up, cache as the offline safety net.
   e.respondWith(

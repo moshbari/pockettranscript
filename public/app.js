@@ -282,10 +282,15 @@ async function copyCode() {
   }
 }
 
+const SHORTCUT_URL = 'https://pockettranscript.up.railway.app/get-transcript.shortcut';
+
 async function installShortcut() {
   const copied = await copyCode();
   toast(copied ? 'Code copied ✓ Paste it when asked' : 'Copy your code below first');
-  setTimeout(() => { location.href = '/get-transcript.shortcut'; }, copied ? 900 : 2500);
+  // Fetched from the second address on purpose: a different origin means this
+  // app's service worker can't touch it — through the worker, iPhone Safari
+  // saved it as "Get Transcript.shortcut.html" and Shortcuts wouldn't open it.
+  setTimeout(() => { location.href = SHORTCUT_URL; }, copied ? 900 : 2500);
 }
 
 // -------------------------------------------------------------- startup ---
