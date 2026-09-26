@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0f14">
+<title>Get Transcript</title>
+<meta name="description" content="Share any video or voice note to Get Transcript on Android, then send the words to ChatGPT or Claude.">
+<link rel="manifest" href="/android/manifest.webmanifest">
+<link rel="icon" href="/icons/icon-192.png">
+<link rel="stylesheet" href="/styles.css">
+<style>
+  h1{font-size:23px;line-height:1.25;margin:0 0 8px;letter-spacing:-.02em}
+  .dim{color:var(--ink-dim);font-size:15px;line-height:1.55;margin:0}
+  .small{font-size:13.5px;color:var(--ink-faint);line-height:1.55;margin:8px 0 0}
+  .small a,.dim a{color:var(--accent)}
+  .steps2{margin:10px 0 0;padding-left:22px;color:var(--ink-dim);font-size:15px;line-height:1.6}
+  .steps2 b{color:var(--ink)}
+  .steps2 li{margin-bottom:6px}
+  .spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);
+    animation:sp 0.9s linear infinite;margin:6px auto 14px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .center{text-align:center}
+  .preview{background:var(--card-2);border:1px solid var(--line);border-radius:11px;padding:12px;
+    font-size:14.5px;line-height:1.55;color:var(--ink-dim);white-space:pre-wrap;max-height:120px;overflow:hidden}
+  .preview.all{max-height:none}
+  .plist{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+  .pbtn{width:100%;text-align:left;background:var(--card-2);color:var(--ink);border:1px solid var(--line);
+    border-radius:12px;padding:14px;font-size:15.5px;font-weight:600;cursor:pointer;line-height:1.35}
+  .pbtn:active{border-color:var(--accent)}
+  .pbtn.mine{border-color:var(--accent)}
+  .row2{display:flex;gap:8px;margin-top:10px}
+  .row2 .btn{flex:1}
+  textarea.text-input{min-height:90px;font:inherit;resize:vertical}
+  .toast2{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ok);color:#04210f;
+    font-weight:700;padding:12px 18px;border-radius:999px;opacity:0;transition:opacity .2s;pointer-events:none;
+    max-width:90vw;text-align:center}
+  .toast2.on{opacity:1}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="brand"><span class="logo">▶</span><span>Get Transcript</span></div>
+</header>
+
+<main class="screen">
+
+  <!-- Working on a shared link or file -->
+  <div id="vWait" class="card center hidden">
+    <div class="spin"></div>
+    <b>Getting the words…</b>
+    <p class="small">Short videos take a few seconds. Long ones up to a few minutes. Keep this open.</p>
+  </div>
+
+  <!-- The words are here -->
+  <div id="vDone" class="hidden" style="display:flex;flex-direction:column;gap:14px">
+    <div class="card">
+      <span class="label">✅ Got it</span>
+      <div id="dTitle" style="font-weight:650;margin-bottom:8px"></div>
+      <div id="dPreview" class="preview"></div>
+      <div class="row2">
+        <button id="dAll" class="btn btn-ghost" type="button">📄 Read it all</button>
+        <button id="dCopy" class="btn btn-ghost" type="button">Copy words</button>
+      </div>
+    </div>
+    <div class="card">
+      <span class="label">What should ChatGPT or Claude do?</span>
+      <p class="small" style="margin-top:0">Tap one, then pick <b>ChatGPT</b> or <b>Claude</b> in the list that opens.</p>
+      <div id="dPrompts" class="plist"></div>
+      <div id="ownBox" class="hidden" style="margin-top:10px">
+        <textarea id="ownText" class="text-input" placeholder="What should it do with the words?"></textarea>
+        <button id="ownGo" class="btn btn-primary btn-lg" type="button" style="margin-top:8px">Send</button>
+      </div>
+      <p class="small"><a id="editLink" href="/prompts">⚙️ Add or edit my prompts</a></p>
+    </div>
+  </div>
+
+  <!-- Something went wrong -->
+  <div id="vErr" class="card hidden">
+    <span class="label">That didn't work</span>
+    <p id="errText" class="dim"></p>
+  </div>
+
+  <!-- Setup / home -->
+  <div id="vHome" class="hidden" style="display:flex;flex-direction:column;gap:14px">
+    <div class="card">
+      <h1>The words from any video, on Android</h1>
+      <p class="dim">Watching a reel, a video or a voice note? Tap <b>Share → Get Transcript</b>.
+        You get every word, and one more tap sends it to <b>ChatGPT</b> or <b>Claude</b>.</p>
+    </div>
+
+    <div id="installCard" class="card">
+      <span class="label">Step 1 · Add it to your phone (once)</span>
+      <button id="installBtn" class="btn btn-primary btn-lg hidden" type="button">📲 Add Get Transcript to my phone</button>
+      <div id="installManual">
+        <ol class="steps2">
+          <li>Open this page in <b>Chrome</b>.</li>
+          <li>Tap <b>⋮</b> (top right), then <b>Add to Home screen</b> or <b>Install app</b>.</li>
+          <li>Tap <b>Install</b>.</li>
+        </ol>
+      </div>
+      <p class="small">That's what puts <b>Get Transcript</b> in your Share menu.</p>
+    </div>
+
+    <div class="card">
+      <span class="label">Step 2 · Use it</span>
+      <ol class="steps2">
+        <li>On any video (Facebook, Instagram, TikTok, YouTube), tap <b>Share</b>.</li>
+        <li>Tap <b>Get Transcript</b>. Not there? Tap <b>More</b> first.</li>
+        <li>Pick what to do, then pick <b>ChatGPT</b> or <b>Claude</b>.</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <span class="label">Or paste a link</span>
+      <div class="input-row">
+        <input id="linkInput" class="text-input" placeholder="https://…" inputmode="url" autocomplete="off">
+        <button id="linkGo" class="btn btn-primary" type="button">Go</button>
+      </div>
+    </div>
+
+    <p class="small center">Free: up to 20 transcripts a day. On an iPhone? <a href="/share">Get the iPhone button</a>.</p>
+  </div>
+
+</main>
+<div id="toast2" class="toast2"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch { return null; } }
+const isCode = (c) => /^[a-f0-9]{32}$/.test(c || '');
+const qs = new URLSearchParams(location.search);
+
+// ---- the code: from the address (e.g. UOM AI Coach), this browser, or a new one
+let code = (qs.get('code') || '').toLowerCase();
+if (isCode(code)) store('pt.shareCode', code);
+else code = store('pt.deviceId') || store('pt.shareCode') || '';
+if (!isCode(code)) {
+  const b = new Uint8Array(16); crypto.getRandomValues(b);
+  code = [...b].map((x) => x.toString(16).padStart(2, '0')).join('');
+  store('pt.shareCode', code);
+}
+// Android's Share menu posts to /android/share with no address of ours on it; the
+// cookie is how the server knows whose it is.
+document.cookie = 'pt_code=' + code + '; Path=/android; Max-Age=315360000; SameSite=Lax; Secure';
+if (qs.get('pack')) fetch('/api/prompts/pack?code=' + code + '&pack=' + encodeURIComponent(qs.get('pack')), { method: 'POST' }).catch(() => {});
+$('editLink').href = '/prompts?code=' + code;
+
+function toast(msg) {
+  const t = $('toast2'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2600);
+}
+function view(id) {
+  for (const v of ['vWait', 'vDone', 'vErr', 'vHome']) $(v).classList.toggle('hidden', v !== id);
+  window.scrollTo(0, 0);
+}
+function fail(msg) {
+  $('errText').textContent = msg;
+  view('vErr');
+  $('vHome').classList.remove('hidden');   // the paste box right under it
+}
+
+// ---- waiting for the words (the server holds each check up to 40s)
+async function waitFor(id, anon) {
+  view('vWait');
+  const q = anon ? '' : '&deviceId=' + code;
+  for (let i = 0; i < 40; i++) {
+    let r;
+    try { r = await (await fetch('/api/grab/' + id + '?v=2' + q)).json(); }
+    catch { await new Promise((ok) => setTimeout(ok, 3000)); continue; }
+    if (r.state === 'done') return showDone(r, anon);
+    if (r.state === 'error' || r.ok === false) return fail(r.error || 'Something went wrong.');
+  }
+  fail("It's a long one. It will be waiting at pocket.99dfy.com when it's done.");
+}
+
+let transcript = '';
+async function showDone(r, anon) {
+  transcript = r.transcript || '';
+  $('dTitle').textContent = r.title || '';
+  $('dPreview').textContent = transcript;
+  // Your own prompts first (with their real words), then the built-in ones.
+  let mine = [], builtIn = (r.prompts || []).filter((p) => !(r.custom || {})[p] && !(r.manage || {})[p] && !(r.texts || {})[p]);
+  if (!anon) {
+    try {
+      const p = await (await fetch('/api/prompts?code=' + code)).json();
+      if (p.ok) { mine = p.prompts; builtIn = p.builtIn; }
+    } catch { /* built-ins still work */ }
+  }
+  const list = $('dPrompts');
+  list.textContent = '';
+  const add = (label, words, cls) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'pbtn' + (cls ? ' ' + cls : ''); b.textContent = label;
+    b.onclick = () => words ? send(words) : ($('ownBox').classList.remove('hidden'), $('ownText').focus());
+    list.append(b);
+  };
+  for (const p of mine) add(p.name, p.text, 'mine');
+  for (const p of builtIn) add(p, p);
+  add('✏️ Type my own instruction', null);
+  view('vDone');
+  history.replaceState({}, '', '/android/');
+}
+
+// Android's own Share list: the person picks ChatGPT or Claude, and that app
+// opens a new chat with everything filled in. Copied too, as a backup.
+function send(instruction) {
+  const full = instruction + '\n\nHere is the transcript:\n\n' + transcript;
+  try { navigator.clipboard.writeText(full); } catch { /* share still works */ }
+  if (navigator.share) {
+    navigator.share({ text: full }).catch(() => {});
+  } else {
+    toast('Copied. Open ChatGPT or Claude and paste it.');
+  }
+}
+
+$('ownGo').onclick = () => { const t = $('ownText').value.trim(); if (t) send(t); };
+$('dAll').onclick = () => $('dPreview').classList.toggle('all');
+$('dCopy').onclick = async () => {
+  try { await navigator.clipboard.writeText(transcript); toast('Words copied ✓'); } catch { toast('Press and hold the words to copy'); }
+};
+
+// ---- paste a link
+$('linkGo').onclick = async () => {
+  const url = $('linkInput').value.trim();
+  if (!url) return;
+  try {
+    const r = await (await fetch('/api/grab?deviceId=' + code, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }),
+    })).json();
+    if (!r.ok) return fail(r.error || 'Something went wrong.');
+    $('linkInput').value = '';
+    waitFor(r.id, false);
+  } catch (e) { fail("Couldn't reach the server. Check your internet and try again."); }
+};
+
+// ---- install: Chrome offers a one-tap prompt when it can
+let installEvt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault(); installEvt = e;
+  $('installBtn').classList.remove('hidden');
+  $('installManual').classList.add('hidden');
+});
+$('installBtn').onclick = async () => {
+  if (!installEvt) return;
+  installEvt.prompt();
+  const c = await installEvt.userChoice;
+  if (c.outcome === 'accepted') toast('Added ✓ Now share a video to Get Transcript');
+  installEvt = null;
+};
+// Already running as the installed app: no need to show step 1.
+if (matchMedia('(display-mode: standalone)').matches) $('installCard').classList.add('hidden');
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+
+// ---- which screen
+if (qs.get('job')) waitFor(qs.get('job'), qs.get('anon') === '1');
+else if (qs.get('error')) fail(qs.get('error'));
+else view('vHome');
+</script>
+</body>
+</html>

@@ -749,7 +749,9 @@ function firstUrl(s) {
   return m ? m[0] : '';
 }
 
-app.post('/api/grab', rawUpload, upload.single('file'), (req, res) => {
+app.post('/api/grab', rawUpload, upload.single('file'), (req, res) => grab(req, res));
+
+function grab(req, res) {
   // No code (left blank on install) is fine: everything but YouTube-through-
   // your-computer works without one.
   const given = String(req.query.deviceId || (req.body && req.body.deviceId) || '').trim().toLowerCase();
@@ -794,6 +796,33 @@ app.post('/api/grab', rawUpload, upload.single('file'), (req, res) => {
   const job = newServerJob(d, { url });
   runLink(job);
   res.json({ ok: true, id: job.id });
+}
+
+// ============================================================ ANDROID ======
+// Android has no Shortcuts, but Chrome can install /android/ as an app, and an
+// installed web app can sit in Android's Share menu (manifest share_target).
+// Android POSTs what was shared (link, caption or file) here as a normal form.
+// The code rides in a cookie the /android/ page set, since a share carries no URL
+// of ours. Then we hand the phone back to /android/ to wait for the words.
+function cookieCode(req) {
+  const m = String(req.headers.cookie || '').match(/(?:^|;\s*)pt_code=([a-f0-9]{32})/);
+  return m ? m[1] : '';
+}
+
+app.post('/android/share', upload.single('file'), (req, res) => {
+  const code = cookieCode(req);
+  req.query.deviceId = code;
+  req.body = req.body || {};
+  // Apps put the link in any of the three fields; join them so firstUrl finds it.
+  req.body.text = [req.body.url, req.body.text, req.body.title].filter(Boolean).join(' ');
+  const back = (q) => res.redirect(303, '/android/?' + q);
+  grab(req, {
+    status() { return this; },
+    json(b) {
+      if (b.ok) back('job=' + b.id + (isValidDeviceId(code) ? '' : '&anon=1'));
+      else back('error=' + encodeURIComponent(b.error || 'Something went wrong.'));
+    },
+  });
 });
 
 function previewOf(text, max = 220) {

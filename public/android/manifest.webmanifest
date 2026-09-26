@@ -1,0 +1,28 @@
+{
+  "id": "/android/",
+  "name": "Get Transcript",
+  "short_name": "Get Transcript",
+  "description": "Share any video or voice note to Get Transcript, then send the words to ChatGPT or Claude.",
+  "start_url": "/android/",
+  "scope": "/android/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0f14",
+  "theme_color": "#0b0f14",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "share_target": {
+    "action": "/android/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [{ "name": "file", "accept": ["audio/*", "video/*"] }]
+    }
+  }
+}

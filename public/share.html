@@ -129,11 +129,16 @@
   </details>
 
   <p class="small">Free: up to 20 transcripts a day. Transcripts are deleted from our server after a day.
-    iPhone only for now.</p>
+    On Android? <a href="/android">Get the Android version</a>.</p>
 
 </main>
 <div id="toast2" class="toast2"></div>
 
+<script>
+// Android can't run Shortcuts: its version lives at /android (same code, same
+// prompts). Keep ?code= and ?pack= so AI Coach's link works on both phones.
+if (/Android/i.test(navigator.userAgent)) location.replace('/android/' + location.search);
+</script>
 <script>
 // Every visitor gets their own code, kept in this browser so it's the same
 // every time they come back. If this browser is already connected to a
