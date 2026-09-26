@@ -29,6 +29,30 @@
 
 <!-- ── Screen 1: pair this phone with the desktop ─────────────────────── -->
 <main id="pairScreen" class="screen hidden">
+  <section class="card picker">
+    <div class="picker-kicker">Free · 1 minute to set up</div>
+    <h2 class="picker-title">Get the Share button on your phone</h2>
+    <p class="picker-sub">Tap <b>Share</b> on any video or voice note, get every word, and send it to ChatGPT or Claude.</p>
+    <div class="picker-grid">
+      <a class="pick" href="/share" data-os="ios">
+        <span class="pick-yours">Your phone</span>
+        <svg class="pick-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
+        <span class="pick-name">iPhone</span>
+        <span class="pick-go">Set up <span aria-hidden="true">→</span></span>
+      </a>
+      <a class="pick" href="/android/" data-os="android">
+        <span class="pick-yours">Your phone</span>
+        <svg class="pick-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6.2 4.6 8 7.7M17.8 4.6 16 7.7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+          <path d="M2.5 17.5a9.5 9.5 0 0 1 19 0z"/>
+          <circle cx="7.6" cy="13.6" r="1.15" fill="var(--card)"/><circle cx="16.4" cy="13.6" r="1.15" fill="var(--card)"/>
+        </svg>
+        <span class="pick-name">Android</span>
+        <span class="pick-go">Set up <span aria-hidden="true">→</span></span>
+      </a>
+    </div>
+  </section>
+
   <div class="card intro">
     <h1>Connect your computer</h1>
     <p>Your Mac does the actual transcript grabbing. Pair this phone with it once — you'll never do this again on this phone.</p>
@@ -40,10 +64,7 @@
     <a class="btn btn-ghost btn-lg guide-link" href="/install">📖 Show me, with pictures</a>
   </div>
 
-  <a class="card sharecard" href="/share" style="text-decoration:none;color:inherit;display:block">
-    <div class="share-title">📱 No computer? Just want the Share button?</div>
-    <p class="share-body" style="margin:0">Get the words from Facebook, Instagram, TikTok, voice notes and more, straight on your iPhone. <b>One tap to set up →</b></p>
-  </a>
+
 
   <div class="card">
     <label for="codeInput" class="label">Pairing code</label>
@@ -85,13 +106,29 @@
     <p id="mainError" class="error hidden"></p>
   </div>
 
-  <div class="card sharecard">
-    <div class="share-title">⚡ Even easier: a Share button on your iPhone</div>
-    <p class="share-body">Skip the copy-and-paste. Watching something on Facebook, Instagram, TikTok, YouTube, or a voice note?
-      Just tap <b>Share → Get Transcript</b>, and send the words straight to ChatGPT or Claude.</p>
-    <a class="btn btn-primary btn-lg" href="/share">Get the Share button (free)</a>
-    <p class="share-hint">Takes one minute. The next page shows you each step.</p>
-  </div>
+  <section class="card picker">
+    <div class="picker-kicker">Free · 1 minute to set up</div>
+    <h2 class="picker-title">Get the Share button on your phone</h2>
+    <p class="picker-sub">Tap <b>Share</b> on any video or voice note, get every word, and send it to ChatGPT or Claude.</p>
+    <div class="picker-grid">
+      <a class="pick" href="/share" data-os="ios">
+        <span class="pick-yours">Your phone</span>
+        <svg class="pick-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
+        <span class="pick-name">iPhone</span>
+        <span class="pick-go">Set up <span aria-hidden="true">→</span></span>
+      </a>
+      <a class="pick" href="/android/" data-os="android">
+        <span class="pick-yours">Your phone</span>
+        <svg class="pick-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6.2 4.6 8 7.7M17.8 4.6 16 7.7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+          <path d="M2.5 17.5a9.5 9.5 0 0 1 19 0z"/>
+          <circle cx="7.6" cy="13.6" r="1.15" fill="var(--card)"/><circle cx="16.4" cy="13.6" r="1.15" fill="var(--card)"/>
+        </svg>
+        <span class="pick-name">Android</span>
+        <span class="pick-go">Set up <span aria-hidden="true">→</span></span>
+      </a>
+    </div>
+  </section>
 
   <section id="jobsSection" class="jobs hidden">
     <div class="section-head">
@@ -126,6 +163,14 @@
 
 <div id="toast" class="toast hidden"></div>
 
+<script>
+// Light up the visitor's own phone, so the right button is obvious.
+(function () {
+  const ua = navigator.userAgent;
+  const os = /Android/i.test(ua) ? 'android' : /iPhone|iPad|iPod/i.test(ua) ? 'ios' : '';
+  if (os) document.querySelectorAll('.pick[data-os="' + os + '"]').forEach((a) => a.classList.add('yours'));
+})();
+</script>
 <script src="/app.js"></script>
 </body>
 </html>
