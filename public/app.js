@@ -149,6 +149,15 @@ function paintJobs(jobs) {
     row.querySelector('.job-sub').textContent = sub;
 
     if (j.status === 'done') {
+      const copy = document.createElement('button');
+      copy.className = 'job-copy';
+      copy.title = 'Copy title, link and timestamped transcript';
+      copy.innerHTML = COPY_ICON + '<span>Copy</span>';
+      copy.addEventListener('click', (ev) => {
+        ev.stopPropagation();   // copy, don't open
+        copyJob(j.id, copy);
+      });
+      row.appendChild(copy);
       const chev = document.createElement('div');
       chev.className = 'job-chev';
       chev.textContent = '›';
@@ -225,13 +234,45 @@ async function submitUrl() {
 // The full view is byte-for-byte what the extension writes into its .txt on the
 // computer: title, video URL, blank line, then "0:00 - line" rows. It is built
 // by content.js, not reassembled here, so the two can't drift apart.
-function fullTranscript() {
-  if (!currentJob) return '';
-  if (currentJob.text) return currentJob.text;
+function fullTranscript(job = currentJob) {
+  if (!job) return '';
+  if (job.text) return job.text;
   // Only if an old job predates the server carrying `text`.
-  const head = [currentJob.title, currentJob.url].filter(Boolean).join('\n');
-  const body = (currentJob.segments || []).map((s) => `${s.timestamp} - ${s.text}`).join('\n');
+  const head = [job.title, job.url].filter(Boolean).join('\n');
+  const body = (job.segments || []).map((s) => `${s.timestamp} - ${s.text}`).join('\n');
   return head ? `${head}\n\n${body}` : body;
+}
+
+const COPY_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6.5A2.5 2.5 0 0 1 7.5 4H15"/></svg>';
+const CHECK_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+// Copy straight from the list: title, link, then "0:00 - line" rows.
+// The transcript has to be fetched first, and iPhone Safari refuses a
+// clipboard write that comes after an await — so hand it a ClipboardItem
+// holding the promise, which keeps the tap's permission alive.
+async function copyJob(id, btn) {
+  if (btn.disabled) return;
+  btn.disabled = true;
+  const text = api(`/api/jobs/${id}?deviceId=${deviceId}`).then((r) => fullTranscript(r.job));
+  try {
+    if (window.ClipboardItem && navigator.clipboard.write) {
+      const blob = text.then((t) => new Blob([t], { type: 'text/plain' }));
+      await navigator.clipboard.write([new ClipboardItem({ 'text/plain': blob })]);
+    } else {
+      await navigator.clipboard.writeText(await text);
+    }
+    btn.classList.add('done');
+    btn.innerHTML = CHECK_ICON + '<span>Copied</span>';
+    setTimeout(() => {
+      btn.classList.remove('done');
+      btn.innerHTML = COPY_ICON + '<span>Copy</span>';
+    }, 1800);
+  } catch (e) {
+    // Couldn't write it here: open it, where Copy always works.
+    text.then(() => openJob(id)).catch(() => toast(e.message || 'Could not copy'));
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 function renderBody() {

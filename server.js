@@ -399,7 +399,9 @@ app.get('/api/jobs/:id', (req, res) => {
     ok: true,
     job: {
       ...jobSummary(job),
-      text: job.text || '',
+      // Older server jobs saved the bare words as `text`; give them the
+      // title, link and timestamps too.
+      text: job.text && job.text !== job.plain ? job.text : job.plain ? stampedText(job) : '',
       plain: job.plain || '',
       segments: job.segments || [],
     },
@@ -620,12 +622,21 @@ function newServerJob(d, fields) {
   return job;
 }
 
+// Same shape as the desktop .txt: title, link, then "0:00 - line" rows.
+function stampedText(job) {
+  const segs = job.segments || [];
+  const rows = segs.length && segs[0].start !== undefined
+    ? segs.map((sg) => `${stamp(sg.start)} - ${String(sg.text || '').trim()}`).join('\n')
+    : job.plain;
+  return [job.title, job.url].filter(Boolean).join('\n') + '\n\n' + rows;
+}
+
 function finishJob(job, result) {
   if (result.text && result.text.trim()) {
     job.status = 'done';
     job.plain = result.text.trim();
-    job.text = job.plain;
     job.segments = Array.isArray(result.segments) ? result.segments : [];
+    job.text = stampedText(job);
   } else {
     job.status = 'error';
     job.error = result.error || 'No words came back. The recording may be silent or music only.';
@@ -694,9 +705,7 @@ async function runYouTube(job, d, { anon }) {
     job.status = 'done';
     job.plain = result.text.trim();
     job.segments = segs;
-    // Same shape as the desktop .txt: title, link, then "0:00 - line" rows.
-    const rows = segs.length ? segs.map((sg) => `${stamp(sg.start)} - ${String(sg.text || '').trim()}`).join('\n') : job.plain;
-    job.text = [job.title, job.url].filter(Boolean).join('\n') + '\n\n' + rows;
+    job.text = stampedText(job);
     job.source = 'server';
     job.updatedAt = now();
     save();
