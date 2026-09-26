@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0f14">
+<title>My Prompts</title>
+<meta name="description" content="Save your own named instructions for the Get Transcript button. They show up in the list on your iPhone.">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="stylesheet" href="/styles.css">
+<style>
+  .intro p{margin:0 0 8px}
+  .prompt{display:flex;flex-direction:column;gap:8px}
+  .prompt-top{display:flex;gap:8px;align-items:center}
+  .prompt-top .text-input{flex:1;min-width:0;font-weight:650}
+  .mini{flex:none;min-width:40px;padding:9px 10px}
+  textarea.text-input{min-height:110px;resize:vertical;font:inherit;line-height:1.45}
+  .del{align-self:flex-end;background:none;border:none;color:#fca5a5;font-size:14px;padding:4px 2px;cursor:pointer}
+  .empty{color:var(--ink-dim);font-size:14.5px;margin:0}
+  .savebar{position:sticky;bottom:0;padding:12px 0 calc(12px + env(safe-area-inset-bottom));
+    background:linear-gradient(transparent,var(--bg) 30%)}
+  .saved{color:var(--ok);font-size:14px;text-align:center;margin:8px 0 0;min-height:1.2em}
+  .builtin{margin:0;padding-left:20px;color:var(--ink-dim);font-size:14.5px}
+  .builtin li{margin-bottom:4px}
+  .small{font-size:13.5px;color:var(--ink-faint);line-height:1.55;margin:0}
+  .small a{color:var(--accent)}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="brand"><span class="logo">▶</span><span>My Prompts</span></div>
+</header>
+
+<main class="screen">
+
+  <!-- No code in this browser yet -->
+  <div id="needCode" class="card hidden">
+    <span class="label">Your code</span>
+    <p class="empty" style="margin-bottom:10px">Paste the code you gave the Get Transcript button when you added it.</p>
+    <div class="input-row">
+      <input id="codeInput" class="text-input" placeholder="Paste your code" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <button id="codeGo" class="btn btn-primary" type="button">Open</button>
+    </div>
+    <p id="codeErr" class="error hidden"></p>
+    <p class="small">Don't have one? <a href="/share">Get the Share button</a> first. Your code is on that page.</p>
+  </div>
+
+  <div id="editor" class="hidden" style="display:flex;flex-direction:column;gap:14px">
+    <div class="card intro">
+      <h1>Your own prompts</h1>
+      <p>Give each one a short <b>name</b>. The name is what you'll see in the list on your iPhone after
+        <b>Ask ChatGPT</b> or <b>Ask Claude</b>. The <b>instruction</b> is what gets sent, with the transcript under it.</p>
+      <p class="small">Saved on our server, so they're there every time. No need to reinstall anything.</p>
+    </div>
+
+    <div id="list" style="display:flex;flex-direction:column;gap:12px"></div>
+    <p id="empty" class="empty hidden">No prompts yet. Tap <b>Add a prompt</b> to make your first one.</p>
+
+    <button id="addBtn" class="btn btn-ghost btn-lg" type="button">+ Add a prompt</button>
+
+    <div class="savebar">
+      <button id="saveBtn" class="btn btn-primary btn-lg" type="button">Save</button>
+      <p id="saveErr" class="error hidden" style="text-align:center"></p>
+      <p id="saved" class="saved"></p>
+    </div>
+
+    <div class="card">
+      <span class="label">Always in the list too</span>
+      <ul id="builtin" class="builtin"></ul>
+      <p class="small" style="margin-top:8px">Plus <b>✏️ Type my own instruction</b> for a one-off.</p>
+    </div>
+  </div>
+
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch { return null; } }
+const isCode = (c) => /^[a-f0-9]{32}$/.test(c || '');
+
+// The Shortcut opens this page with its own code in the address. Otherwise use
+// the code this browser already has (the app's, or the one /share gave it).
+let code = (new URLSearchParams(location.search).get('code') || '').replace(/\s/g, '').toLowerCase();
+if (isCode(code)) {
+  if (!isCode(store('pt.deviceId')) && !isCode(store('pt.shareCode'))) store('pt.shareCode', code);
+} else {
+  code = store('pt.deviceId') || store('pt.shareCode') || '';
+}
+
+let prompts = [];
+let dirty = false;
+
+function markDirty() { dirty = true; $('saved').textContent = ''; }
+
+function render() {
+  const list = $('list');
+  list.textContent = '';
+  prompts.forEach((p, i) => {
+    const card = document.createElement('div');
+    card.className = 'card prompt';
+
+    const top = document.createElement('div');
+    top.className = 'prompt-top';
+    const name = document.createElement('input');
+    name.className = 'text-input';
+    name.placeholder = 'Name, e.g. Facebook post in my style';
+    name.maxLength = 60;
+    name.value = p.name;
+    name.addEventListener('input', () => { p.name = name.value; markDirty(); });
+    top.append(name);
+    for (const [label, dir, title] of [['↑', -1, 'Move up'], ['↓', 1, 'Move down']]) {
+      const b = document.createElement('button');
+      b.className = 'btn btn-ghost mini';
+      b.type = 'button';
+      b.textContent = label;
+      b.title = title;
+      b.disabled = (i + dir < 0) || (i + dir >= prompts.length);
+      b.addEventListener('click', () => {
+        [prompts[i], prompts[i + dir]] = [prompts[i + dir], prompts[i]];
+        markDirty(); render();
+      });
+      top.append(b);
+    }
+
+    const text = document.createElement('textarea');
+    text.className = 'text-input';
+    text.placeholder = 'What should the AI do with the transcript? e.g. Write a Facebook post from this. Short sentences, one emoji, end with a question.';
+    text.maxLength = 4000;
+    text.value = p.text;
+    text.addEventListener('input', () => { p.text = text.value; markDirty(); });
+
+    const del = document.createElement('button');
+    del.className = 'del';
+    del.type = 'button';
+    del.textContent = 'Delete';
+    del.addEventListener('click', () => { prompts.splice(i, 1); markDirty(); render(); });
+
+    card.append(top, text, del);
+    list.append(card);
+  });
+  $('empty').classList.toggle('hidden', prompts.length > 0);
+}
+
+async function api(method, body) {
+  const r = await fetch('/api/prompts?code=' + encodeURIComponent(code), {
+    method, headers: { 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  let data = {};
+  try { data = await r.json(); } catch { /* not JSON */ }
+  if (!r.ok || data.ok === false) throw new Error(data.error || `Something went wrong (${r.status}).`);
+  return data;
+}
+
+async function open() {
+  if (!isCode(code)) { $('needCode').classList.remove('hidden'); return; }
+  try {
+    const data = await api('GET');
+    prompts = data.prompts.map((p) => ({ ...p }));
+    $('builtin').textContent = '';
+    for (const b of data.builtIn) {
+      const li = document.createElement('li');
+      li.textContent = b;
+      $('builtin').append(li);
+    }
+    $('needCode').classList.add('hidden');
+    $('editor').classList.remove('hidden');
+    render();
+  } catch (e) {
+    $('needCode').classList.remove('hidden');
+    $('codeErr').textContent = e.message;
+    $('codeErr').classList.remove('hidden');
+  }
+}
+
+$('codeGo').addEventListener('click', () => {
+  const c = $('codeInput').value.replace(/\s/g, '').toLowerCase();
+  if (!isCode(c)) {
+    $('codeErr').textContent = "That isn't a whole code. It's 32 letters and numbers.";
+    $('codeErr').classList.remove('hidden');
+    return;
+  }
+  code = c;
+  if (!isCode(store('pt.deviceId'))) store('pt.shareCode', c);
+  $('codeErr').classList.add('hidden');
+  open();
+});
+
+$('addBtn').addEventListener('click', () => {
+  prompts.push({ name: '', text: '' });
+  markDirty(); render();
+  const names = $('list').querySelectorAll('.prompt-top .text-input');
+  names[names.length - 1].focus();
+});
+
+$('saveBtn').addEventListener('click', async () => {
+  $('saveErr').classList.add('hidden');
+  $('saveBtn').disabled = true;
+  try {
+    const data = await api('PUT', { prompts });
+    prompts = data.prompts.map((p) => ({ ...p }));   // empty rows dropped, names tidied
+    dirty = false;
+    render();
+    $('saved').textContent = prompts.length
+      ? '✓ Saved. They’re in your iPhone list now.'
+      : '✓ Saved.';
+  } catch (e) {
+    $('saveErr').textContent = e.message;
+    $('saveErr').classList.remove('hidden');
+  } finally {
+    $('saveBtn').disabled = false;
+  }
+});
+
+window.addEventListener('beforeunload', (e) => { if (dirty) e.preventDefault(); });
+
+open();
+</script>
+</body>
+</html>

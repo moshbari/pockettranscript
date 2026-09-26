@@ -54,6 +54,10 @@ const anonUse = new Map();   // ip -> { day, count }
 const aliases = new Map();   // share code -> desktop deviceId
 const resolveId = (id) => aliases.get(id) || id;
 
+// Each person's own saved instructions for the Share button, by code:
+// code -> [{ name, text }]. The name is what shows in the Shortcut's list.
+const userPrompts = new Map();
+
 // ---------------------------------------------------------------- disk ----
 // Transcripts have to outlive a redeploy, or "kept for 7 days" is a lie: every
 // push would silently empty the phone's list. Railway gives the service a
@@ -68,7 +72,7 @@ function serialise() {
   for (const [id, d] of devices) {
     out[id] = { name: d.name, lastSeen: d.lastSeen, jobs: [...d.jobs.values()] };
   }
-  return JSON.stringify({ version: 1, savedAt: now(), devices: out, aliases: Object.fromEntries(aliases) });
+  return JSON.stringify({ version: 1, savedAt: now(), devices: out, aliases: Object.fromEntries(aliases), prompts: Object.fromEntries(userPrompts) });
 }
 
 function saveNow() {
@@ -119,6 +123,7 @@ function load() {
       devices.set(id, dev);
     }
     for (const [from, to] of Object.entries(raw.aliases || {})) aliases.set(from, to);
+    for (const [id, list] of Object.entries(raw.prompts || {})) if (Array.isArray(list)) userPrompts.set(id, list);
     console.log(`[store] loaded ${devices.size} device(s), ${jobs} transcript(s), ${aliases.size} alias(es)`);
   } catch (e) {
     console.error('[store] could not load, starting empty:', e.message);
@@ -309,6 +314,14 @@ app.post('/api/pair', (req, res) => {
   const shareCode = String((req.body && req.body.shareCode) || '').toLowerCase();
   if (isValidDeviceId(shareCode) && shareCode !== entry.deviceId) {
     aliases.set(shareCode, entry.deviceId);
+    // Prompts saved under the Share-button code follow it to the computer's id.
+    const mine = userPrompts.get(shareCode);
+    if (mine && mine.length) {
+      const theirs = userPrompts.get(entry.deviceId) || [];
+      const names = new Set(theirs.map((p) => p.name));
+      userPrompts.set(entry.deviceId, [...theirs, ...mine.filter((p) => !names.has(p.name))].slice(0, MAX_PROMPTS));
+      userPrompts.delete(shareCode);
+    }
     save();
   }
   res.json({ ok: true, deviceId: entry.deviceId, name: d.name, online: now() - d.lastSeen < ONLINE_MS });
@@ -459,6 +472,78 @@ const PROMPTS = [
   'Translate this into Bangla',
   TYPE_OWN,
 ];
+// Last in the list: opens the page where people save their own prompts.
+const MANAGE = '⚙️ Add or edit my prompts';
+const MAX_PROMPTS = 30;
+
+// Your saved prompts first, then the built-in ones. `texts` turns a name into
+// the instruction sent to the AI; `manage` flags the choice that opens the page.
+// Shortcuts from before custom prompts (no `v`) only get the built-in list:
+// they would send a custom prompt's NAME to the AI instead of its words.
+function promptMenu(code, version) {
+  if (version < 2) return { prompts: PROMPTS, custom: { [TYPE_OWN]: 'yes' } };
+  const mine = code ? userPrompts.get(code) || [] : [];
+  const texts = {};
+  for (const p of mine) texts[p.name] = p.text;
+  const out = {
+    prompts: [...mine.map((p) => p.name), ...PROMPTS],
+    custom: { [TYPE_OWN]: 'yes' },
+    texts,
+    manage: {},
+  };
+  if (code) {
+    out.prompts.push(MANAGE);
+    out.manage[MANAGE] = 'yes';
+  }
+  return out;
+}
+
+// Names can't clash with the built-in choices, or the Shortcut couldn't tell
+// "your Summarise" from ours.
+const RESERVED = new Set([...PROMPTS, MANAGE]);
+
+function cleanPrompts(list) {
+  if (!Array.isArray(list)) return { error: 'Nothing to save.' };
+  const out = [];
+  const seen = new Set();
+  for (const p of list) {
+    const name = String((p && p.name) || '').replace(/\s+/g, ' ').trim();
+    const text = String((p && p.text) || '').trim();
+    if (!name && !text) continue;                       // an empty row: skip it
+    if (!name) return { error: 'Every prompt needs a name.' };
+    if (!text) return { error: `"${name}" needs its instruction.` };
+    if (name.length > 60) return { error: `"${name.slice(0, 30)}…" is too long a name (60 letters max).` };
+    if (text.length > 4000) return { error: `"${name}" is too long (4,000 letters max).` };
+    if (RESERVED.has(name)) return { error: `"${name}" is already a built-in choice. Pick another name.` };
+    if (seen.has(name.toLowerCase())) return { error: `Two prompts are called "${name}". Give each its own name.` };
+    seen.add(name.toLowerCase());
+    out.push({ name, text });
+  }
+  if (out.length > MAX_PROMPTS) return { error: `That's more than ${MAX_PROMPTS} prompts. Remove a few first.` };
+  return { prompts: out };
+}
+
+// The code in the URL is the only key: the same code the Shortcut was given.
+function promptOwner(req) {
+  const given = String(req.query.code || '').trim().toLowerCase();
+  return isValidDeviceId(given) ? resolveId(given) : null;
+}
+
+app.get('/api/prompts', (req, res) => {
+  const owner = promptOwner(req);
+  if (!owner) return res.status(400).json({ ok: false, error: "That code doesn't look right." });
+  res.json({ ok: true, prompts: userPrompts.get(owner) || [], builtIn: PROMPTS.filter((p) => p !== TYPE_OWN) });
+});
+
+app.put('/api/prompts', (req, res) => {
+  const owner = promptOwner(req);
+  if (!owner) return res.status(400).json({ ok: false, error: "That code doesn't look right." });
+  const r = cleanPrompts(req.body && req.body.prompts);
+  if (r.error) return res.status(400).json({ ok: false, error: r.error });
+  if (r.prompts.length) userPrompts.set(owner, r.prompts); else userPrompts.delete(owner);
+  save();
+  res.json({ ok: true, prompts: r.prompts });
+});
 
 function newServerJob(d, fields) {
   const job = {
@@ -602,7 +687,8 @@ function previewOf(text, max = 220) {
 
 app.get('/api/grab/:id', async (req, res) => {
   const given = String(req.query.deviceId || '').trim().toLowerCase();
-  const d = getDevice(isValidDeviceId(given) ? resolveId(given) : ANON_ID);
+  const owner = isValidDeviceId(given) ? resolveId(given) : null;
+  const d = getDevice(owner || ANON_ID);
   const job = d.jobs.get(req.params.id);
   if (!job) return res.status(404).json({ ok: false, state: 'error', error: 'That transcript is no longer on the server.' });
 
@@ -626,8 +712,7 @@ app.get('/api/grab/:id', async (req, res) => {
       // A few lines for the Shortcut's menu. The whole thing there pushed the
       // ChatGPT/Claude buttons off an iPhone screen.
       preview: previewOf(transcript),
-      prompts: PROMPTS,
-      custom: { [TYPE_OWN]: 'yes' },
+      ...promptMenu(owner, Number(req.query.v) || 1),
     });
   }
   if (job.status === 'error') return res.json({ ok: true, state: 'error', error: job.error });

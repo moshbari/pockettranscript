@@ -13,7 +13,8 @@ except YouTube-through-your-computer.
 Flow: Share a link or a file (or copy a link and just run it) → the server
 turns it into text → pick Ask ChatGPT / Ask Claude / Just copy it → pick an
 instruction (the list comes from the server, so it can change without
-reinstalling) → the AI's answer is shown.
+reinstalling; your own named prompts from pocket.99dfy.com/prompts come
+first) → the AI's answer is shown.
 """
 import plistlib
 import uuid
@@ -168,7 +169,8 @@ act('repeat.count', GroupingIdentifier=rg, WFControlFlowMode=0, WFRepeatCount=30
 with If(var('Pending'), HAS_VALUE):
     p = uid()
     act('downloadurl', UUID=p, WFHTTPMethod='GET', ShowWhenRun=False,
-        WFURL=tok(f'{BASE}/api/grab/', var('JobId'), '?deviceId=', var('Code')))
+        # v=2: this Shortcut knows custom prompts (names -> words via `texts`).
+        WFURL=tok(f'{BASE}/api/grab/', var('JobId'), '?v=2&deviceId=', var('Code')))
     set_var('Result', out(p, 'Contents of URL'))
     set_var('Pending', get_key('pending', 'Result'))
 act('repeat.count', GroupingIdentifier=rg, WFControlFlowMode=2, UUID=uid())
@@ -191,6 +193,19 @@ def ask_ai(ident, descriptor, param, **extra):
     act('choosefromlist', UUID=choice, WFInput=att(get_key('prompts', 'Result')),
         WFChooseFromListActionPrompt='What should it do?')
     set_var('Instruction', out(choice, 'Chosen Item'))
+    # "Add or edit my prompts" opens the page, with this Shortcut's code.
+    manage = uid()
+    act('getvalueforkey', UUID=manage, WFDictionaryKey=tok(var('Instruction')),
+        WFInput=att(get_key('manage', 'Result')))
+    with If(out(manage, 'Dictionary Value'), HAS_VALUE):
+        act('openurl', WFInput=tok(f'{BASE}/prompts?code=', var('Code')))
+        act('exit')
+    # One of your own prompts: its name is in the list, its words are in `texts`.
+    words = uid()
+    act('getvalueforkey', UUID=words, WFDictionaryKey=tok(var('Instruction')),
+        WFInput=att(get_key('texts', 'Result')))
+    with If(out(words, 'Dictionary Value'), HAS_VALUE):
+        set_var('Instruction', out(words, 'Dictionary Value'))
     # "Type my own" is the one choice the server's `custom` map knows.
     own_flag = uid()
     act('getvalueforkey', UUID=own_flag, WFDictionaryKey=tok(var('Instruction')),
