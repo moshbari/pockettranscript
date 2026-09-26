@@ -211,9 +211,7 @@ async function submitUrl() {
       method: 'POST', body: JSON.stringify({ deviceId, url }),
     });
     $('urlInput').value = '';
-    toast(r.online
-      ? (r.duplicate ? 'Already working on that one' : 'Sent to your computer')
-      : 'Queued — it will run when your Mac wakes');
+    toast(r.duplicate ? 'Already working on that one' : 'Getting the words…');
     loop();
   } catch (e) {
     showError($('mainError'), e.message);

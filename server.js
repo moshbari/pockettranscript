@@ -362,7 +362,9 @@ app.post('/api/jobs', (req, res) => {
     id: crypto.randomBytes(8).toString('hex'),
     url: `https://www.youtube.com/watch?v=${videoId}`,
     videoId,
-    status: 'queued',
+    // The server (through the proxy) goes first; the computer is the backup.
+    worker: 'server',
+    status: 'working',
     title: '',
     text: '',
     plain: '',
@@ -374,7 +376,7 @@ app.post('/api/jobs', (req, res) => {
   d.jobs.set(job.id, job);
   trimJobs(d);
   save();
-  wakeWaiters(d);   // a desktop poll is probably hanging right now — feed it
+  runYouTube(job, d, { anon: false });
 
   res.json({
     ok: true,
@@ -408,6 +410,13 @@ app.post('/api/jobs/:id/retry', (req, res) => {
   const d = getDevice(deviceId);
   const job = d.jobs.get(req.params.id);
   if (!job) return res.status(404).json({ ok: false, error: 'That job is gone.' });
+  if (job.videoId) {
+    // YouTube: server first again, the computer as the backup.
+    Object.assign(job, { worker: 'server', status: 'working', error: '', updatedAt: now() });
+    save();
+    runYouTube(job, d, { anon: false });
+    return res.json({ ok: true, job: jobSummary(job) });
+  }
   if (job.worker === 'server') {
     return res.status(400).json({ ok: false, error: 'Send this one again from the Get Transcript button on your phone.' });
   }
@@ -434,8 +443,9 @@ app.delete('/api/jobs/:id', (req, res) => {
 //   POST /api/grab?deviceId=…      JSON {url}  or  multipart field "file"
 //   GET  /api/grab/:id?deviceId=…  holds up to 45s, answers the moment it's done
 //
-// YouTube goes to the Mac's extension (YouTube blocks servers). Every other
-// link, and every file, goes to the transcriber service (yt-dlp + Whisper).
+// Everything goes to the transcriber service first (YouTube captions through
+// its residential proxy; other links and files through yt-dlp + Whisper).
+// YouTube falls back to the Mac's extension only if the server can't get it.
 const multer = require('multer');
 const os = require('os');
 const TRANSCRIBER_URL = process.env.TRANSCRIBER_URL || 'https://transcriber-production-f2f1.up.railway.app';
@@ -595,6 +605,71 @@ async function runLink(job) {
   }
 }
 
+// "0:07" or "1:02:07", the same stamps the desktop .txt uses.
+function stamp(sec) {
+  const t = Math.floor(Number(sec) || 0);
+  const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = String(t % 60).padStart(2, '0');
+  return h ? `${h}:${String(m).padStart(2, '0')}:${s}` : `${m}:${s}`;
+}
+
+async function youTubeTitle(url) {
+  try {
+    const r = await fetch('https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent(url),
+      { signal: AbortSignal.timeout(8000) });
+    if (r.ok) return (await r.json()).title || '';
+  } catch { /* no title is fine */ }
+  return '';
+}
+
+// YouTube: the transcriber first (captions through the residential proxy). If
+// that fails and the computer is awake, hand the job to its extension instead.
+async function runYouTube(job, d, { anon }) {
+  let result;
+  try {
+    const [r, title] = await Promise.all([
+      callTranscriber('/transcribe', {
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: job.url }),
+      }),
+      youTubeTitle(job.url),
+    ]);
+    result = r;
+    job.title = title;
+  } catch (e) {
+    result = { error: `Couldn't reach the transcriber: ${e.message}` };
+  }
+
+  if (result.text && result.text.trim()) {
+    const segs = Array.isArray(result.segments) ? result.segments : [];
+    job.status = 'done';
+    job.plain = result.text.trim();
+    job.segments = segs;
+    // Same shape as the desktop .txt: title, link, then "0:00 - line" rows.
+    const rows = segs.length ? segs.map((sg) => `${stamp(sg.start)} - ${String(sg.text || '').trim()}`).join('\n') : job.plain;
+    job.text = [job.title, job.url].filter(Boolean).join('\n') + '\n\n' + rows;
+    job.source = 'server';
+    job.updatedAt = now();
+    save();
+    return;
+  }
+
+  const macAwake = !anon && d.lastSeen > 0 && now() - d.lastSeen < ONLINE_MS;
+  if (macAwake) {
+    job.worker = 'extension';
+    job.status = 'queued';
+    job.updatedAt = now();
+    save();
+    wakeWaiters(d);
+    return;
+  }
+  job.status = 'error';
+  job.error = !anon && d.lastSeen
+    ? "The server couldn't get this one, and your computer is asleep. Wake the Mac (with Chrome open) and try again."
+    : "The server couldn't get this one. It may have no captions. For YouTube backup, see pocket.99dfy.com/share";
+  job.updatedAt = now();
+  save();
+}
+
 async function runFile(job, file) {
   try {
     const form = new FormData();
@@ -650,27 +725,10 @@ app.post('/api/grab', rawUpload, upload.single('file'), (req, res) => {
 
   const videoId = extractYtId(url);
   if (videoId) {
-    const macAwake = !anon && d.lastSeen > 0 && now() - d.lastSeen < ONLINE_MS;
-    if (macAwake) {
-      // Same path as the phone app: the Mac's extension reads the captions.
-      const job = newServerJob(d, {
-        worker: 'extension', status: 'queued',
-        url: `https://www.youtube.com/watch?v=${videoId}`, videoId,
-      });
-      wakeWaiters(d);
-      return res.json({ ok: true, id: job.id });
-    }
-    // Mac asleep: the server's own YouTube path sometimes works. Try it, and
-    // if it fails, say why in words he can act on.
+    // Server first (the transcriber reads captions through the proxy). The
+    // computer's extension only gets it if the server can't.
     const job = newServerJob(d, { url: `https://www.youtube.com/watch?v=${videoId}`, videoId });
-    runLink(job).then(() => {
-      if (job.status === 'error') {
-        job.error = !d.lastSeen
-          ? "YouTube didn't hand this one over. YouTube needs the free computer helper: see pocket.99dfy.com/share"
-          : 'Your computer is asleep, and YouTube only gives transcripts to it. Wake the Mac (with Chrome open) and try again.';
-        save();
-      }
-    });
+    runYouTube(job, d, { anon });
     return res.json({ ok: true, id: job.id });
   }
 
