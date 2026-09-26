@@ -492,7 +492,13 @@ const MAX_PROMPTS = 30;
 // they would send a custom prompt's NAME to the AI instead of its words.
 function promptMenu(code, version) {
   if (version < 2) return { prompts: PROMPTS, custom: { [TYPE_OWN]: 'yes' } };
-  const mine = code ? userPrompts.get(code) || [] : [];
+  // Shortcuts reads a dot in a dictionary key as a key path ("a.b" = key b
+  // inside key a), and the Shortcut uses both the name AND the words as keys.
+  // A prompt with a full stop failed "Could not evaluate the key path". So
+  // every dot goes out as ONE DOT LEADER (U+2024): looks the same, not a path.
+  const noDots = (t) => t.replace(/\./g, '\u2024');
+  const mine = (code ? userPrompts.get(code) || [] : [])
+    .map((p) => ({ name: noDots(p.name), text: noDots(p.text) }));
   const texts = {};
   for (const p of mine) texts[p.name] = p.text;
   const out = {
