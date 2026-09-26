@@ -140,7 +140,15 @@
 // computer (the PocketTranscript app), use that code: YouTube works at once.
 const ICLOUD = 'https://www.icloud.com/shortcuts/3d318aa8b171422ea810ecf0fcbe76af';
 function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch { return null; } }
-let code = store('pt.deviceId') || store('pt.shareCode');
+// An app (like UOM AI Coach) can send people here with their code and a
+// starter pack of prompts: /share?code=…&pack=uom
+const qs = new URLSearchParams(location.search);
+const given = (qs.get('code') || '').toLowerCase();
+let code = /^[a-f0-9]{32}$/.test(given) ? given : (store('pt.deviceId') || store('pt.shareCode'));
+if (given === code) store('pt.shareCode', code);
+if (qs.get('pack') && /^[a-f0-9]{32}$/.test(code || '')) {
+  fetch('/api/prompts/pack?code=' + code + '&pack=' + encodeURIComponent(qs.get('pack')), { method: 'POST' }).catch(() => {});
+}
 if (!/^[a-f0-9]{32}$/.test(code || '')) {
   const b = new Uint8Array(16); crypto.getRandomValues(b);
   code = [...b].map((x) => x.toString(16).padStart(2, '0')).join('');

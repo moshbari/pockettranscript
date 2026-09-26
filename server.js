@@ -57,6 +57,9 @@ const resolveId = (id) => aliases.get(id) || id;
 // Each person's own saved instructions for the Share button, by code:
 // code -> [{ name, text }]. The name is what shows in the Shortcut's list.
 const userPrompts = new Map();
+// Which starter packs a code has already been given (so a prompt someone
+// deleted on purpose doesn't come back): code -> [pack names]
+const packsGiven = new Map();
 
 // ---------------------------------------------------------------- disk ----
 // Transcripts have to outlive a redeploy, or "kept for 7 days" is a lie: every
@@ -72,7 +75,7 @@ function serialise() {
   for (const [id, d] of devices) {
     out[id] = { name: d.name, lastSeen: d.lastSeen, jobs: [...d.jobs.values()] };
   }
-  return JSON.stringify({ version: 1, savedAt: now(), devices: out, aliases: Object.fromEntries(aliases), prompts: Object.fromEntries(userPrompts) });
+  return JSON.stringify({ version: 1, savedAt: now(), devices: out, aliases: Object.fromEntries(aliases), prompts: Object.fromEntries(userPrompts), packsGiven: Object.fromEntries(packsGiven) });
 }
 
 function saveNow() {
@@ -124,6 +127,7 @@ function load() {
     }
     for (const [from, to] of Object.entries(raw.aliases || {})) aliases.set(from, to);
     for (const [id, list] of Object.entries(raw.prompts || {})) if (Array.isArray(list)) userPrompts.set(id, list);
+    for (const [id, list] of Object.entries(raw.packsGiven || {})) if (Array.isArray(list)) packsGiven.set(id, list);
     console.log(`[store] loaded ${devices.size} device(s), ${jobs} transcript(s), ${aliases.size} alias(es)`);
   } catch (e) {
     console.error('[store] could not load, starting empty:', e.message);
@@ -544,6 +548,46 @@ function promptOwner(req) {
   const given = String(req.query.code || '').trim().toLowerCase();
   return isValidDeviceId(given) ? resolveId(given) : null;
 }
+
+// Starter packs: ready-made prompts an app (like UOM AI Coach) hands its
+// members, so they can post on day one without writing a prompt. Edit the JSON
+// file to change them; members who already got a pack keep their copy.
+const PACKS = { uom: JSON.parse(fs.readFileSync(path.join(__dirname, 'packs-uom.json'), 'utf8')) };
+
+// Adds a pack's prompts to the top of a code's list, once per code.
+app.post('/api/prompts/pack', (req, res) => {
+  const owner = promptOwner(req);
+  if (!owner) return res.status(400).json({ ok: false, error: "That code doesn't look right." });
+  const name = String(req.query.pack || '');
+  const pack = PACKS[name];
+  if (!pack) return res.status(404).json({ ok: false, error: 'No such pack.' });
+  const given = packsGiven.get(owner) || [];
+  if (!given.includes(name)) {
+    const mine = userPrompts.get(owner) || [];
+    const have = new Set(mine.map((p) => p.name));
+    userPrompts.set(owner, [...pack.filter((p) => !have.has(p.name)), ...mine].slice(0, MAX_PROMPTS));
+    packsGiven.set(owner, [...given, name]);
+    save();
+  }
+  res.json({ ok: true, prompts: userPrompts.get(owner) || [] });
+});
+
+// How many transcripts a code finished today (the member's own day: `tz` is
+// minutes east of UTC) — AI Coach counts these as today's posts.
+app.get('/api/usage', (req, res) => {
+  const owner = promptOwner(req);
+  if (!owner) return res.status(400).json({ ok: false, error: "That code doesn't look right." });
+  const tz = Math.max(-840, Math.min(840, Number(req.query.tz) || 0)) * 60000;
+  const local = now() + tz;
+  const midnight = local - (local % 86400000) - tz;
+  const d = devices.get(owner);
+  const jobs = d ? [...d.jobs.values()].filter((j) => j.status === 'done') : [];
+  res.json({
+    ok: true,
+    today: jobs.filter((j) => j.createdAt >= midnight).length,
+    ever: jobs.length,
+  });
+});
 
 app.get('/api/prompts', (req, res) => {
   const owner = promptOwner(req);
