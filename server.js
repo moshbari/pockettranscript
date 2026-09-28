@@ -751,6 +751,42 @@ function firstUrl(s) {
 
 app.post('/api/grab', rawUpload, upload.single('file'), (req, res) => grab(req, res));
 
+// "Try again" without transcribing again. If ChatGPT or Claude errors (say it's
+// logged out), iOS stops the Shortcut dead and nothing inside it can catch that.
+// But the clipboard still holds the prompt, which carries the transcript (and
+// its link). So running Get Transcript again sends us that, and we hand back the
+// transcript we already made: the ChatGPT / Claude menu is back in a second.
+function allUrls(s) {
+  return String(s || '').match(/https?:\/\/[^\s<>"']+/g) || [];
+}
+const squash = (s) => String(s || '').replace(/\s+/g, ' ').trim();
+
+function recentJob(d, { urls = [], body = '' }) {
+  const done = [...d.jobs.values()].filter((j) => j.status === 'done')
+    .sort((a, b) => b.createdAt - a.createdAt);
+  for (const u of urls) {
+    const vid = extractYtId(u);
+    const hit = done.find((j) => (vid ? j.videoId === vid : j.url === u));
+    if (hit) return hit;
+  }
+  const flat = squash(body);
+  if (flat.length < 40) return null;
+  return done.find((j) => {
+    const head = squash(j.plain || j.text).slice(0, 300);
+    return head.length >= 40 && flat.includes(head);
+  }) || null;
+}
+
+// Text sent as a "file" (the Shortcut does this when the clipboard holds words,
+// not a link). Recordings are never small enough to be mistaken for this.
+function textFile(file) {
+  if (!file || !file.size || file.size > 5 * 1024 * 1024) return '';
+  try {
+    const s = fs.readFileSync(file.path, 'utf8');
+    return s.includes('\uFFFD') ? '' : s;
+  } catch { return ''; }
+}
+
 function grab(req, res) {
   // No code (left blank on install) is fine: everything but YouTube-through-
   // your-computer works without one.
@@ -759,6 +795,26 @@ function grab(req, res) {
   const d = getDevice(anon ? ANON_ID : resolveId(given));
   // Only a code with a computer behind it skips the daily cap.
   const limited = anon || !d.lastSeen;
+
+  // Already made this one? Hand it straight back (see recentJob).
+  const sent = req.body && (req.body.url || req.body.text);
+  const typed = textFile(req.file);
+  const again = recentJob(d, { urls: allUrls(sent || typed), body: typed });
+  if (again) {
+    if (req.file) fs.rm(req.file.path, { force: true }, () => {});
+    return res.json({ ok: true, id: again.id, again: 'yes' });
+  }
+  if (typed && !allUrls(typed).length) {
+    // Words with no link and nothing we made before: not something to transcribe.
+    fs.rm(req.file.path, { force: true }, () => {});
+    return res.status(400).json({ ok: false, error: "I didn't find a link or a file in what you shared." });
+  }
+  if (typed) {
+    // A link inside copied text: treat it like a shared link.
+    fs.rm(req.file.path, { force: true }, () => {});
+    req.file = null;
+    req.body = { ...(req.body || {}), text: typed };
+  }
 
   // Count a no-code user's paid transcripts (files and non-YouTube links).
   const bodyUrl = firstUrl(req.body && (req.body.url || req.body.text));
