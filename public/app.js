@@ -275,9 +275,52 @@ async function copyJob(id, btn) {
   }
 }
 
+// Android: a plain https tap can stay in the browser, so for the big four we
+// ask for their app by package name, with the web page as the fallback when
+// it isn't installed. iPhone opens the app from the plain https link itself.
+const ANDROID_APPS = [
+  [/(^|\.)(youtube\.com|youtu\.be)$/, 'com.google.android.youtube'],
+  [/(^|\.)(facebook\.com|fb\.watch|fb\.com)$/, 'com.facebook.katana'],
+  [/(^|\.)instagram\.com$/, 'com.instagram.android'],
+  [/(^|\.)tiktok\.com$/, 'com.zhiliaoapp.musically'],
+];
+const IS_ANDROID = /Android/i.test(navigator.userAgent);
+
+function linkHref(url) {
+  if (!IS_ANDROID) return url;
+  try {
+    const u = new URL(url);
+    const app = ANDROID_APPS.find(([re]) => re.test(u.hostname));
+    if (!app) return url;
+    return `intent://${u.host}${u.pathname}${u.search}${u.hash}#Intent;scheme=https;` +
+      `package=${app[1]};S.browser_fallback_url=${encodeURIComponent(url)};end`;
+  } catch { return url; }
+}
+
+// Draw the text with every web address as a tappable link (new tab).
+// Built from text nodes, never innerHTML, so a transcript can't inject markup.
+function setLinkedText(el, text) {
+  el.textContent = '';
+  const re = /https?:\/\/[^\s<>"']+/g;
+  let last = 0, m;
+  while ((m = re.exec(text))) {
+    const url = m[0].replace(/[.,;:!?)\]]+$/, ''); // don't swallow the sentence's full stop
+    el.append(text.slice(last, m.index));
+    const a = document.createElement('a');
+    a.href = linkHref(url);
+    a.textContent = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    el.append(a);
+    last = m.index + url.length;
+    re.lastIndex = last;
+  }
+  el.append(text.slice(last));
+}
+
 function renderBody() {
   if (!currentJob) return;
-  $('viewBody').textContent = stampedView ? fullTranscript() : (currentJob.plain || '');
+  setLinkedText($('viewBody'), stampedView ? fullTranscript() : (currentJob.plain || ''));
   $('tabPlain').classList.toggle('active', !stampedView);
   $('tabStamped').classList.toggle('active', stampedView);
 }
