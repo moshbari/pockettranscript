@@ -479,9 +479,11 @@ function rawUpload(req, res, next) {
 // on current iOS), so answers carry flags: `pending` while working, and
 // `custom` maps the type-your-own choice to "yes".
 const TYPE_OWN = '✏️ Type my own instruction';
-// The web address opens the ChatGPT app on a NEW chat (opening the app itself
-// lands on the last chat).
-const CHATGPT_URL = process.env.CHATGPT_URL || 'https://chatgpt.com/';
+// Opens the ChatGPT app on a NEW chat (opening the app itself lands on the
+// last chat). Only addresses listed in chatgpt.com/.well-known/apple-app-site-association
+// open the app; plain https://chatgpt.com/ opened Safari. "/#native" is listed
+// as "ChatGPT home. This will start a new conversation in-app."
+const CHATGPT_URL = process.env.CHATGPT_URL || 'https://chatgpt.com/#native';
 
 const PROMPTS = [
   'Summarise this in simple words',
