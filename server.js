@@ -492,6 +492,20 @@ const PROMPTS = [
 const MANAGE = '⚙️ Add or edit my prompts';
 const MAX_PROMPTS = 30;
 
+// The Shortcut sends "<instruction>\n\nHere is the transcript:\n\n<transcript>".
+// Many saved prompts end with their own empty label ("… Output only the post.
+// INPUT:"), so the AI saw "INPUT:" followed by nothing and asked "please send me
+// the input" (7 Oct 2026). Drop that dangling label and say plainly where the
+// input is. Applied when sending, never to what is saved.
+function pointAtTranscript(text) {
+  let t = String(text || '').trimEnd();
+  if (t.endsWith(':')) {
+    const cut = Math.max(...['.', '!', '?', '\u0964', '\u2024', '\n'].map((c) => t.lastIndexOf(c, t.length - 2)));
+    if (t.length - cut <= 60) t = t.slice(0, cut + 1).trimEnd();
+  }
+  return t + '\n\nMy input is the transcript below. Use it as-is; don\'t ask me for it.';
+}
+
 // Your saved prompts first, then the built-in ones. `texts` turns a name into
 // the instruction sent to the AI; `manage` flags the choice that opens the page.
 // Shortcuts from before custom prompts (no `v`) only get the built-in list:
@@ -504,7 +518,7 @@ function promptMenu(code, version) {
   // every dot goes out as ONE DOT LEADER (U+2024): looks the same, not a path.
   const noDots = (t) => t.replace(/\./g, '\u2024');
   const mine = (code ? userPrompts.get(code) || [] : [])
-    .map((p) => ({ name: noDots(p.name), text: noDots(p.text) }));
+    .map((p) => ({ name: noDots(p.name), text: noDots(pointAtTranscript(p.text)) }));
   const texts = {};
   for (const p of mine) texts[p.name] = p.text;
   const out = {

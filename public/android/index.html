@@ -203,10 +203,21 @@ async function showDone(r, anon) {
   history.replaceState({}, '', '/android/');
 }
 
+// Same as the server's pointAtTranscript: a saved prompt ending in an empty
+// "INPUT:" made the AI ask for the input. Drop the label, say where it is.
+function pointAtTranscript(text) {
+  let t = String(text || '').trimEnd();
+  if (t.endsWith(':')) {
+    const cut = Math.max(...['.', '!', '?', '\u0964', '\u2024', '\n'].map((c) => t.lastIndexOf(c, t.length - 2)));
+    if (t.length - cut <= 60) t = t.slice(0, cut + 1).trimEnd();
+  }
+  return t + '\n\nMy input is the transcript below. Use it as-is; don\'t ask me for it.';
+}
+
 // Android's own Share list: the person picks ChatGPT or Claude, and that app
 // opens a new chat with everything filled in. Copied too, as a backup.
 function send(instruction) {
-  const full = instruction + '\n\nHere is the transcript:\n\n' + transcript;
+  const full = pointAtTranscript(instruction) + '\n\nHere is the transcript:\n\n' + transcript;
   try { navigator.clipboard.writeText(full); } catch { /* share still works */ }
   if (navigator.share) {
     navigator.share({ text: full }).catch(() => {});
