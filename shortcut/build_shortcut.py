@@ -187,8 +187,8 @@ set_var('Transcript', get_key('transcript', 'Result'))
 act('setclipboard', WFInput=att(var('Transcript')))
 
 
-def ask_ai(ident, descriptor, param, **extra):
-    """Pick an instruction, build the prompt, hand it to the app, show the answer."""
+def build_prompt():
+    """Pick an instruction; the full prompt ends up on the clipboard and is returned."""
     choice = uid()
     act('choosefromlist', UUID=choice, WFInput=att(get_key('prompts', 'Result')),
         WFChooseFromListActionPrompt='What should it do?')
@@ -217,6 +217,12 @@ def ask_ai(ident, descriptor, param, **extra):
     prompt = text(var('Instruction'), '\n\nHere is the transcript:\n\n', var('Transcript'))
     # Backup: if the AI app hiccups, the full prompt is ready to paste.
     act('setclipboard', WFInput=att(prompt))
+    return prompt
+
+
+def ask_ai(ident, descriptor, param, **extra):
+    """Pick an instruction, hand the prompt to the app, show the answer."""
+    prompt = build_prompt()
     a = uid()
     act(ident, UUID=a, ShowWhenRun=False, AppIntentDescriptor=descriptor, **{param: tok(prompt)}, **extra)
     answer = out(a, 'Response')
@@ -225,6 +231,21 @@ def ask_ai(ident, descriptor, param, **extra):
     with If(answer, HAS_VALUE):
         act('setclipboard', WFInput=att(answer))
     act('showresult', Text=tok('✅ Copied. Paste it anywhere (Facebook, notes, WhatsApp…).\n\n', answer))
+
+
+def open_chatgpt():
+    """Copy the prompt and open the ChatGPT app; the person pastes and sends.
+
+    Since Oct 2026 ChatGPT's own "Ask ChatGPT" action often finishes the answer
+    inside its app and hands the Shortcut "an unknown error occurred" instead.
+    A Shortcut can't catch an error, so the only cure is to not wait for one.
+    """
+    build_prompt()
+    act('notification', WFNotificationActionTitle='Ready in ChatGPT',
+        WFNotificationActionBody=tok('Tap the message box, Paste, then Send ↑'))
+    act('openapp', WFAppIdentifier='com.openai.chat',
+        WFSelectedApp={'BundleIdentifier': 'com.openai.chat', 'Name': 'ChatGPT',
+                       'TeamIdentifier': '2DC432GLL2'})
 
 
 CHATGPT = {'TeamIdentifier': '2DC432GLL2', 'BundleIdentifier': 'com.openai.chat',
@@ -240,7 +261,7 @@ act('choosefrommenu', GroupingIdentifier=mg, WFControlFlowMode=0,
     # iPhone screen. "Read it all" opens the full text on its own screen.
     WFMenuPrompt=tok('✅ Copied. What now?\n\n', var('Preview')), WFMenuItems=MENU)
 act('choosefrommenu', GroupingIdentifier=mg, WFControlFlowMode=1, WFMenuItemTitle='Ask ChatGPT')
-ask_ai('com.openai.chat.AskIntent', CHATGPT, 'prompt', newChat=True)
+open_chatgpt()
 act('choosefrommenu', GroupingIdentifier=mg, WFControlFlowMode=1, WFMenuItemTitle='Ask Claude')
 ask_ai('com.anthropic.claude.ClaudeAppIntentsExtension', CLAUDE, 'message')
 act('choosefrommenu', GroupingIdentifier=mg, WFControlFlowMode=1, WFMenuItemTitle='📄 Read it all')
