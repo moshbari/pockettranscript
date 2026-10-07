@@ -479,6 +479,10 @@ function rawUpload(req, res, next) {
 // on current iOS), so answers carry flags: `pending` while working, and
 // `custom` maps the type-your-own choice to "yes".
 const TYPE_OWN = '✏️ Type my own instruction';
+// The web address opens the ChatGPT app on a NEW chat (opening the app itself
+// lands on the last chat).
+const CHATGPT_URL = process.env.CHATGPT_URL || 'https://chatgpt.com/';
+
 const PROMPTS = [
   'Summarise this in simple words',
   'Give me the key points and the action steps',
@@ -928,6 +932,9 @@ app.get('/api/grab/:id', async (req, res) => {
       // A few lines for the Shortcut's menu. The whole thing there pushed the
       // ChatGPT/Claude buttons off an iPhone screen.
       preview: previewOf(transcript),
+      // Where "Ask ChatGPT" sends the person. Kept here, not in the Shortcut,
+      // so it can change without everyone reinstalling.
+      chatgptUrl: CHATGPT_URL,
       ...promptMenu(owner, Number(req.query.v) || 1),
     });
   }

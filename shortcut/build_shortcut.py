@@ -241,11 +241,20 @@ def open_chatgpt():
     A Shortcut can't catch an error, so the only cure is to not wait for one.
     """
     build_prompt()
-    act('notification', WFNotificationActionTitle='Ready in ChatGPT',
-        WFNotificationActionBody=tok('Tap the message box, Paste, then Send ↑'))
-    act('openapp', WFAppIdentifier='com.openai.chat',
-        WFSelectedApp={'BundleIdentifier': 'com.openai.chat', 'Name': 'ChatGPT',
-                       'TeamIdentifier': '2DC432GLL2'})
+    # An on-screen message, not a notification: tapping a notification opened
+    # the Shortcuts app instead of ChatGPT. OK is the only button.
+    act('alert', WFAlertActionTitle='✅ Copied',
+        WFAlertActionMessage=tok('ChatGPT opens next, in a new chat.\n\nTap the message box, Paste, then Send ↑'),
+        WFAlertActionCancelButtonShown=False)
+    # The server says where to go: opening the app itself landed on the LAST
+    # chat. A web address can open a new one, and can change without reinstalling.
+    url = get_key('chatgptUrl', 'Result')
+    with If(url, HAS_VALUE) as branch:
+        act('openurl', WFInput=att(url))
+        branch.otherwise()
+        act('openapp', WFAppIdentifier='com.openai.chat',
+            WFSelectedApp={'BundleIdentifier': 'com.openai.chat', 'Name': 'ChatGPT',
+                           'TeamIdentifier': '2DC432GLL2'})
 
 
 CHATGPT = {'TeamIdentifier': '2DC432GLL2', 'BundleIdentifier': 'com.openai.chat',
