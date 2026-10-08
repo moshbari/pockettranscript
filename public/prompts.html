@@ -159,7 +159,7 @@ async function open() {
     const data = await api('GET');
     prompts = data.prompts.map((p) => ({ ...p }));
     $('builtin').textContent = '';
-    for (const b of data.builtIn) {
+    for (const b of [...(data.defaults || []).map((d) => d.name), ...data.builtIn]) {
       const li = document.createElement('li');
       li.textContent = b;
       $('builtin').append(li);

@@ -181,21 +181,25 @@ async function showDone(r, anon) {
   $('dTitle').textContent = r.title || '';
   $('dPreview').textContent = transcript;
   // Your own prompts first (with their real words), then the built-in ones.
+  // Without a code the list comes from the grab answer: entries with words in
+  // `texts` are the Bangla post prompts, already worded for the AI (`ready`).
   let mine = [], builtIn = (r.prompts || []).filter((p) => !(r.custom || {})[p] && !(r.manage || {})[p] && !(r.texts || {})[p]);
+  let ready = (r.prompts || []).filter((p) => (r.texts || {})[p]).map((p) => ({ name: p, text: r.texts[p] }));
   if (!anon) {
     try {
       const p = await (await fetch('/api/prompts?code=' + code)).json();
-      if (p.ok) { mine = p.prompts; builtIn = p.builtIn; }
+      if (p.ok) { ready = []; mine = [...(p.defaults || []), ...p.prompts]; builtIn = p.builtIn; }
     } catch { /* built-ins still work */ }
   }
   const list = $('dPrompts');
   list.textContent = '';
-  const add = (label, words, cls) => {
+  const add = (label, words, cls, worded) => {
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'pbtn' + (cls ? ' ' + cls : ''); b.textContent = label;
-    b.onclick = () => words ? send(words) : ($('ownBox').classList.remove('hidden'), $('ownText').focus());
+    b.onclick = () => words ? send(words, worded) : ($('ownBox').classList.remove('hidden'), $('ownText').focus());
     list.append(b);
   };
+  for (const p of ready) add(p.name, p.text, 'mine', true);
   for (const p of mine) add(p.name, p.text, 'mine');
   for (const p of builtIn) add(p, p);
   add('✏️ Type my own instruction', null);
@@ -216,8 +220,8 @@ function pointAtTranscript(text) {
 
 // Android's own Share list: the person picks ChatGPT or Claude, and that app
 // opens a new chat with everything filled in. Copied too, as a backup.
-function send(instruction) {
-  const full = pointAtTranscript(instruction) + '\n\nHere is the transcript:\n\n' + transcript;
+function send(instruction, worded) {
+  const full = (worded ? instruction : pointAtTranscript(instruction)) + '\n\nHere is the transcript:\n\n' + transcript;
   try { navigator.clipboard.writeText(full); } catch { /* share still works */ }
   if (navigator.share) {
     navigator.share({ text: full }).catch(() => {});

@@ -512,6 +512,18 @@ function pointAtTranscript(text) {
   return t + '\n\nMy input is the transcript below. Use it as-is; don\'t ask me for it.';
 }
 
+// Built-in prompts that carry their own words (unlike PROMPTS, whose name IS the
+// instruction): Mosh's Bangla + English Facebook post prompts, at the top of
+// everyone's list. Defined in packs-uom.json, read below with the packs.
+// Someone who saved a prompt with the same name sees their own words instead,
+// in the same top spot, and only once.
+function topPrompts(mine) {
+  const byName = new Map(mine.map((p) => [p.name, p]));
+  const top = DEFAULTS.map((d) => byName.get(d.name) || d);
+  const rest = mine.filter((p) => !DEFAULTS.some((d) => d.name === p.name));
+  return [...top, ...rest];
+}
+
 // Your saved prompts first, then the built-in ones. `texts` turns a name into
 // the instruction sent to the AI; `manage` flags the choice that opens the page.
 // Shortcuts from before custom prompts (no `v`) only get the built-in list:
@@ -523,7 +535,7 @@ function promptMenu(code, version) {
   // A prompt with a full stop failed "Could not evaluate the key path". So
   // every dot goes out as ONE DOT LEADER (U+2024): looks the same, not a path.
   const noDots = (t) => t.replace(/\./g, '\u2024');
-  const mine = (code ? userPrompts.get(code) || [] : [])
+  const mine = topPrompts(code ? userPrompts.get(code) || [] : [])
     .map((p) => ({ name: noDots(p.name), text: noDots(pointAtTranscript(p.text)) }));
   const texts = {};
   for (const p of mine) texts[p.name] = p.text;
@@ -575,6 +587,7 @@ function promptOwner(req) {
 // members, so they can post on day one without writing a prompt. Edit the JSON
 // file to change them; members who already got a pack keep their copy.
 const PACKS = { uom: JSON.parse(fs.readFileSync(path.join(__dirname, 'packs-uom.json'), 'utf8')) };
+const DEFAULTS = PACKS.uom;
 
 // Adds a pack's prompts to the top of a code's list, once per code.
 app.post('/api/prompts/pack', (req, res) => {
@@ -615,10 +628,14 @@ app.get('/api/prompts', (req, res) => {
   const owner = promptOwner(req);
   if (!owner) return res.status(400).json({ ok: false, error: "That code doesn't look right." });
   const mine = userPrompts.get(owner) || [];
+  const have = new Set(mine.map((p) => p.name));
   res.json({
     ok: true, prompts: mine, builtIn: PROMPTS.filter((p) => p !== TYPE_OWN),
-    // The words exactly as they go to the AI (the native app sends these).
-    send: mine.map((p) => ({ name: p.name, text: pointAtTranscript(p.text) })),
+    // Built-ins with their own words, shown above everything (minus any the
+    // person saved under the same name: their copy is in `prompts`).
+    defaults: DEFAULTS.filter((d) => !have.has(d.name)),
+    // The whole top of the list, worded exactly as it goes to the AI (the native app sends these).
+    send: topPrompts(mine).map((p) => ({ name: p.name, text: pointAtTranscript(p.text) })),
   });
 });
 
