@@ -614,7 +614,12 @@ app.get('/api/usage', (req, res) => {
 app.get('/api/prompts', (req, res) => {
   const owner = promptOwner(req);
   if (!owner) return res.status(400).json({ ok: false, error: "That code doesn't look right." });
-  res.json({ ok: true, prompts: userPrompts.get(owner) || [], builtIn: PROMPTS.filter((p) => p !== TYPE_OWN) });
+  const mine = userPrompts.get(owner) || [];
+  res.json({
+    ok: true, prompts: mine, builtIn: PROMPTS.filter((p) => p !== TYPE_OWN),
+    // The words exactly as they go to the AI (the native app sends these).
+    send: mine.map((p) => ({ name: p.name, text: pointAtTranscript(p.text) })),
+  });
 });
 
 app.put('/api/prompts', (req, res) => {
