@@ -60,6 +60,9 @@ const userPrompts = new Map();
 // Which starter packs a code has already been given (so a prompt someone
 // deleted on purpose doesn't come back): code -> [pack names]
 const packsGiven = new Map();
+// Posts and videos saved for later from the Share menu, by code (kept until
+// the person deletes them): code -> [saved item], newest first.
+const savedItems = new Map();
 
 // ---------------------------------------------------------------- disk ----
 // Transcripts have to outlive a redeploy, or "kept for 7 days" is a lie: every
@@ -75,7 +78,7 @@ function serialise() {
   for (const [id, d] of devices) {
     out[id] = { name: d.name, lastSeen: d.lastSeen, jobs: [...d.jobs.values()] };
   }
-  return JSON.stringify({ version: 1, savedAt: now(), devices: out, aliases: Object.fromEntries(aliases), prompts: Object.fromEntries(userPrompts), packsGiven: Object.fromEntries(packsGiven) });
+  return JSON.stringify({ version: 1, savedAt: now(), devices: out, aliases: Object.fromEntries(aliases), prompts: Object.fromEntries(userPrompts), packsGiven: Object.fromEntries(packsGiven), saved: Object.fromEntries(savedItems) });
 }
 
 function saveNow() {
@@ -128,6 +131,12 @@ function load() {
     for (const [from, to] of Object.entries(raw.aliases || {})) aliases.set(from, to);
     for (const [id, list] of Object.entries(raw.prompts || {})) if (Array.isArray(list)) userPrompts.set(id, list);
     for (const [id, list] of Object.entries(raw.packsGiven || {})) if (Array.isArray(list)) packsGiven.set(id, list);
+    for (const [id, list] of Object.entries(raw.saved || {})) {
+      if (!Array.isArray(list)) continue;
+      // Anything still being read when the process died: keep what we have.
+      for (const it of list) if (it.status === 'reading') it.status = 'ready';
+      savedItems.set(id, list);
+    }
     console.log(`[store] loaded ${devices.size} device(s), ${jobs} transcript(s), ${aliases.size} alias(es)`);
   } catch (e) {
     console.error('[store] could not load, starting empty:', e.message);
@@ -1108,6 +1117,182 @@ app.get('/api/grab/:id', async (req, res) => {
   }
   if (job.status === 'error') return res.json({ ok: true, state: 'error', error: job.error });
   res.json({ ok: true, state: 'working', pending: 'yes' });
+});
+
+// ========================================================= saved for later ==
+// One tap in the Share menu ("Save for later") keeps a post or video to use
+// later: comment on it, or make content from it. Saving answers at once; the
+// title and words are filled in afterwards, so the Share sheet closes in a
+// blink. Nothing is transcribed until the person picks it up (that costs money).
+const SAVED_DIR = path.join(DATA_DIR, 'saved');
+const MAX_SAVED = 2000;
+
+function savedSummary(it) {
+  return {
+    id: it.id, url: it.url || '', title: it.title || '', site: it.site || '',
+    kind: it.kind, preview: previewOf(it.text || it.note || '', 160),
+    shots: it.shots || 0, status: it.status, done: !!it.done,
+    createdAt: it.createdAt,
+  };
+}
+
+function savedOwner(req) {
+  const given = String(req.query.code || req.query.deviceId || '').trim().toLowerCase();
+  return isValidDeviceId(given) ? resolveId(given) : null;
+}
+
+function findSaved(owner, id) {
+  return (savedItems.get(owner) || []).find((it) => it.id === id) || null;
+}
+
+function dropSavedFiles(it) {
+  for (let n = 0; n < (it.shots || 0); n++) fs.rm(path.join(SAVED_DIR, `${it.id}-${n}.jpg`), { force: true }, () => {});
+}
+
+// Title and words for a saved link, from the cheap places only.
+async function fillSaved(it) {
+  try {
+    if (extractYtId(it.url)) {
+      it.title = (await youTubeTitle(it.url)) || it.title;
+    } else if (!isTextPostLink(it.url)) {
+      const post = await readPostFromLink(it.url).catch(() => null);
+      if (post) { it.title = post.title; it.text = post.text; }
+    }
+  } catch { /* the link alone is still worth keeping */ }
+  if (!it.title) it.title = it.kind === 'video' ? `Video on ${it.site}` : `Post on ${it.site || 'the web'}`;
+  it.status = 'ready';
+  save();
+}
+
+async function readSavedShots(it, images) {
+  try {
+    it.text = await readScreenshots(images);
+    const author = (it.text.split('\n')[0] || '').trim();
+    if (!it.title && author && author.length < 60) it.title = `Post by ${author}`;
+  } catch (e) {
+    it.note = `Couldn't read the words yet (${e.message}). The screenshots are kept.`;
+  }
+  if (!it.title) it.title = it.site ? `Post on ${it.site}` : 'Saved screenshot';
+  it.status = 'ready';
+  save();
+}
+
+const VIDEO_HOSTS = /(^|\.)(youtube\.com|youtu\.be|tiktok\.com|vimeo\.com|loom\.com)$/;
+function linkKind(url) {
+  if (extractYtId(url) || VIDEO_HOSTS.test(siteName(url))) return 'video';
+  if (/\/(reel|reels|videos|watch|live)\b|\/share\/(v|r)\//.test(url)) return 'video';
+  return 'post';
+}
+
+// { text | url: what was shared (a link, or a caption with a link in it),
+//   images: [jpeg data URLs] (screenshots, optional) }
+app.post('/api/saved', (req, res) => {
+  const owner = savedOwner(req);
+  if (!owner) return res.status(400).json({ ok: false, error: "That code doesn't look right." });
+  const shared = String((req.body && (req.body.url || req.body.text)) || '').slice(0, 5000);
+  const url = firstUrl(shared);
+  const images = (Array.isArray(req.body?.images) ? req.body.images : [])
+    .filter((s) => typeof s === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(s))
+    .slice(0, MAX_SHOTS);
+  if (!url && !images.length) return res.status(400).json({ ok: false, error: "I didn't find a link or a picture in what you shared." });
+
+  const list = savedItems.get(owner) || [];
+  // Saving the same link twice just brings it back to the top.
+  const again = url && !images.length && list.find((it) => it.url === url);
+  if (again) {
+    again.createdAt = now();
+    again.done = false;
+    list.sort((a, b) => b.createdAt - a.createdAt);
+    save();
+    return res.json({ ok: true, item: savedSummary(again), again: true });
+  }
+
+  const it = {
+    id: crypto.randomBytes(8).toString('hex'),
+    url, site: siteName(url), kind: images.length ? 'screenshot' : linkKind(url),
+    title: '', text: '', note: '',
+    // The words that came with the link (an app's caption), minus the link.
+    caption: url ? squash(shared.replace(url, '')).slice(0, 1000) : '',
+    shots: 0, status: 'reading', done: false, createdAt: now(),
+  };
+  if (images.length) {
+    try {
+      fs.mkdirSync(SAVED_DIR, { recursive: true });
+      images.forEach((d, n) => fs.writeFileSync(path.join(SAVED_DIR, `${it.id}-${n}.jpg`), Buffer.from(d.split(',')[1], 'base64')));
+      it.shots = images.length;
+    } catch (e) {
+      return res.status(500).json({ ok: false, error: `Couldn't keep the pictures: ${e.message}` });
+    }
+  }
+  list.unshift(it);
+  for (const old of list.splice(MAX_SAVED)) dropSavedFiles(old);
+  savedItems.set(owner, list);
+  save();
+  res.json({ ok: true, item: savedSummary(it) });
+  if (images.length) readSavedShots(it, images); else fillSaved(it);
+});
+
+app.get('/api/saved', (req, res) => {
+  const owner = savedOwner(req);
+  if (!owner) return res.status(400).json({ ok: false, error: "That code doesn't look right." });
+  res.json({ ok: true, items: (savedItems.get(owner) || []).map(savedSummary) });
+});
+
+app.get('/api/saved/:id', (req, res) => {
+  const owner = savedOwner(req);
+  const it = owner && findSaved(owner, req.params.id);
+  if (!it) return res.status(404).json({ ok: false, error: 'That saved post is gone.' });
+  res.json({ ok: true, item: { ...savedSummary(it), text: it.text || '', note: it.note || '', caption: it.caption || '' } });
+});
+
+app.get('/api/saved/:id/shot/:n', (req, res) => {
+  const owner = savedOwner(req);
+  const it = owner && findSaved(owner, req.params.id);
+  const n = Number(req.params.n);
+  if (!it || !(n >= 0 && n < (it.shots || 0))) return res.status(404).end();
+  res.set('Cache-Control', 'private, max-age=31536000, immutable');
+  res.sendFile(path.join(SAVED_DIR, `${it.id}-${n}.jpg`));
+});
+
+// { done: true | false }
+app.patch('/api/saved/:id', (req, res) => {
+  const owner = savedOwner(req);
+  const it = owner && findSaved(owner, req.params.id);
+  if (!it) return res.status(404).json({ ok: false, error: 'That saved post is gone.' });
+  if (typeof req.body?.done === 'boolean') it.done = req.body.done;
+  save();
+  res.json({ ok: true, item: savedSummary(it) });
+});
+
+app.delete('/api/saved/:id', (req, res) => {
+  const owner = savedOwner(req);
+  const list = owner && savedItems.get(owner);
+  const i = list ? list.findIndex((it) => it.id === req.params.id) : -1;
+  if (i < 0) return res.status(404).json({ ok: false, error: 'That saved post is gone.' });
+  dropSavedFiles(list[i]);
+  list.splice(i, 1);
+  save();
+  res.json({ ok: true });
+});
+
+// "Use it": turn a saved item into a normal job, so the phone shows the usual
+// words + prompts screen (GET /api/grab/:id). Words we already have are used
+// as-is; a video link gets transcribed now.
+app.post('/api/saved/:id/use', (req, res) => {
+  const owner = savedOwner(req);
+  const it = owner && findSaved(owner, req.params.id);
+  if (!it) return res.status(404).json({ ok: false, error: 'That saved post is gone.' });
+  const d = getDevice(owner);
+  if (it.text) {
+    const job = newServerJob(d, { url: it.url, title: it.title, source: it.shots ? 'screenshots' : 'saved' });
+    finishJob(job, { text: it.text, segments: [] });
+    return res.json({ ok: true, id: job.id });
+  }
+  if (!it.url) return res.status(400).json({ ok: false, error: "There's nothing to read in this one yet." });
+  req.query.deviceId = owner;
+  req.body = { text: it.url };
+  req.file = null;
+  grab(req, res);
 });
 
 // ============================================================= static =======

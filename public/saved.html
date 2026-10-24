@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0f14">
+<title>Saved for Later</title>
+<meta name="description" content="Posts and videos you saved from your phone's Share menu, ready to comment on or turn into content.">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="stylesheet" href="/styles.css">
+<style>
+  .tabs{display:flex;gap:8px}
+  .tabs button{flex:1}
+  .tabs .on{background:var(--accent);color:#fff;border-color:transparent}
+  .item{display:flex;flex-direction:column;gap:8px}
+  .meta{font-size:13px;color:var(--ink-faint);display:flex;gap:6px;align-items:center}
+  .item h2{font-size:16.5px;margin:0;line-height:1.35;word-break:break-word}
+  .item h2 a{color:inherit;text-decoration:none}
+  .preview{margin:0;color:var(--ink-dim);font-size:14.5px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+  .shots{display:flex;gap:6px;overflow-x:auto}
+  .shots img{height:120px;border-radius:8px;border:1px solid var(--line, #263241)}
+  .acts{display:flex;flex-wrap:wrap;gap:8px}
+  .acts .btn{flex:1;min-width:110px;padding:10px 12px;font-size:14.5px}
+  .empty{color:var(--ink-dim);font-size:14.5px;margin:0}
+  .small{font-size:13.5px;color:var(--ink-faint);line-height:1.55;margin:0}
+  .small a{color:var(--accent)}
+  .words{white-space:pre-wrap;font-size:14px;line-height:1.5;max-height:320px;overflow:auto;margin:0;
+    background:rgba(127,127,127,.08);border-radius:10px;padding:10px}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="brand"><a href="/" style="color:inherit;text-decoration:none"><span class="logo">▶</span><span>Saved for Later</span></a></div>
+</header>
+
+<main class="screen">
+
+  <div id="needCode" class="card hidden">
+    <span class="label">Your code</span>
+    <p class="empty" style="margin-bottom:10px">Paste your code (Get Transcript app ▸ Settings ▸ Your code).</p>
+    <div class="input-row">
+      <input id="codeInput" class="text-input" placeholder="Paste your code" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <button id="codeGo" class="btn btn-primary" type="button">Open</button>
+    </div>
+    <p id="codeErr" class="error hidden"></p>
+  </div>
+
+  <div id="page" class="hidden" style="display:flex;flex-direction:column;gap:14px">
+    <div class="card">
+      <h1>Saved for later</h1>
+      <p class="small">On your phone, tap <b>Share</b> on any post or video, then <b>Save for later</b>. It lands here.</p>
+    </div>
+    <div class="tabs">
+      <button id="tabTodo" class="btn btn-ghost on" type="button">To do</button>
+      <button id="tabDone" class="btn btn-ghost" type="button">Done</button>
+    </div>
+    <div id="list" style="display:flex;flex-direction:column;gap:12px"></div>
+    <p id="empty" class="empty hidden"></p>
+  </div>
+
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch { return null; } }
+const isCode = (c) => /^[a-f0-9]{32}$/.test(c || '');
+
+let code = (new URLSearchParams(location.search).get('code') || '').replace(/\s/g, '').toLowerCase();
+if (isCode(code)) {
+  if (!isCode(store('pt.deviceId')) && !isCode(store('pt.shareCode'))) store('pt.shareCode', code);
+} else {
+  code = store('pt.deviceId') || store('pt.shareCode') || '';
+}
+
+let items = [];
+let showDone = false;
+const q = () => '?code=' + encodeURIComponent(code);
+
+async function api(method, path, body) {
+  const r = await fetch(path + q(), {
+    method, headers: { 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  let data = {};
+  try { data = await r.json(); } catch { /* not JSON */ }
+  if (!r.ok || data.ok === false) throw new Error(data.error || `Something went wrong (${r.status}).`);
+  return data;
+}
+
+const ICON = { video: '🎬', post: '📝', screenshot: '🖼️' };
+
+function ago(t) {
+  const s = (Date.now() - t) / 1000;
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s / 60) + ' min ago';
+  if (s < 86400) return Math.floor(s / 3600) + ' h ago';
+  const d = Math.floor(s / 86400);
+  return d === 1 ? 'yesterday' : d + ' days ago';
+}
+
+function btn(label, cls, fn) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'btn ' + cls;
+  b.textContent = label;
+  b.addEventListener('click', () => fn(b));
+  return b;
+}
+
+// Waits on the normal job the server made, then shows the words with a Copy button.
+async function useIt(it, card, b) {
+  b.disabled = true;
+  b.textContent = 'Getting the words…';
+  try {
+    const { id } = await api('POST', `/api/saved/${it.id}/use`);
+    let s;
+    do {
+      const r = await fetch(`/api/grab/${id}?deviceId=${encodeURIComponent(code)}&v=2`);
+      s = await r.json();
+    } while (s.state === 'working');
+    if (s.state !== 'done') throw new Error(s.error || 'That didn’t work.');
+    const pre = document.createElement('pre');
+    pre.className = 'words';
+    pre.textContent = s.transcript;
+    card.append(pre);
+    b.textContent = 'Copy the words';
+    b.disabled = false;
+    b.onclick = null;
+    const copy = b.cloneNode(true);
+    copy.addEventListener('click', async () => {
+      await navigator.clipboard.writeText(s.transcript);
+      copy.textContent = '✓ Copied';
+    });
+    b.replaceWith(copy);
+  } catch (e) {
+    b.disabled = false;
+    b.textContent = 'Try again';
+    alertLine(card, e.message);
+  }
+}
+
+function alertLine(card, msg) {
+  const p = document.createElement('p');
+  p.className = 'error';
+  p.textContent = msg;
+  card.append(p);
+}
+
+function render() {
+  const list = $('list');
+  list.textContent = '';
+  const shown = items.filter((it) => it.done === showDone);
+  for (const it of shown) {
+    const card = document.createElement('div');
+    card.className = 'card item';
+
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.textContent = `${ICON[it.kind] || '📌'} ${it.site || 'Screenshot'} · ${ago(it.createdAt)}`;
+
+    const h = document.createElement('h2');
+    if (it.url) {
+      const a = document.createElement('a');
+      a.href = it.url; a.target = '_blank'; a.rel = 'noopener';
+      a.textContent = it.title || it.url;
+      h.append(a);
+    } else {
+      h.textContent = it.title || 'Saved screenshot';
+    }
+    card.append(meta, h);
+
+    if (it.status === 'reading') {
+      const p = document.createElement('p'); p.className = 'preview'; p.textContent = 'Reading it…'; card.append(p);
+    } else if (it.preview) {
+      const p = document.createElement('p'); p.className = 'preview'; p.textContent = it.preview; card.append(p);
+    }
+    if (it.shots) {
+      const row = document.createElement('div');
+      row.className = 'shots';
+      for (let n = 0; n < it.shots; n++) {
+        const img = document.createElement('img');
+        img.loading = 'lazy';
+        img.src = `/api/saved/${it.id}/shot/${n}` + q();
+        img.alt = `Screenshot ${n + 1}`;
+        img.addEventListener('click', () => window.open(img.src, '_blank'));
+        row.append(img);
+      }
+      card.append(row);
+    }
+
+    const acts = document.createElement('div');
+    acts.className = 'acts';
+    if (it.url) acts.append(btn('Open', 'btn-ghost', () => window.open(it.url, '_blank', 'noopener')));
+    acts.append(btn(it.kind === 'video' ? 'Get the words' : 'Show the words', 'btn-primary', (b) => useIt(it, card, b)));
+    acts.append(btn(it.done ? 'Back to To do' : '✓ Done', 'btn-ghost', async () => {
+      await api('PATCH', `/api/saved/${it.id}`, { done: !it.done });
+      it.done = !it.done;
+      render();
+    }));
+    acts.append(btn('Delete', 'btn-ghost', async () => {
+      await api('DELETE', `/api/saved/${it.id}`);
+      items = items.filter((x) => x.id !== it.id);
+      render();
+    }));
+    card.append(acts);
+    list.append(card);
+  }
+  $('empty').textContent = showDone
+    ? 'Nothing marked done yet.'
+    : 'Nothing saved yet. On your phone, tap Share on a post, then Save for later.';
+  $('empty').classList.toggle('hidden', shown.length > 0);
+}
+
+async function load() {
+  if (!isCode(code)) { $('needCode').classList.remove('hidden'); return; }
+  try {
+    items = (await api('GET', '/api/saved')).items;
+    $('needCode').classList.add('hidden');
+    $('page').classList.remove('hidden');
+    render();
+    // Anything still being read: look again shortly.
+    if (items.some((it) => it.status === 'reading')) setTimeout(load, 3000);
+  } catch (e) {
+    $('needCode').classList.remove('hidden');
+    $('codeErr').textContent = e.message;
+    $('codeErr').classList.remove('hidden');
+  }
+}
+
+function tab(done) {
+  showDone = done;
+  $('tabTodo').classList.toggle('on', !done);
+  $('tabDone').classList.toggle('on', done);
+  render();
+}
+$('tabTodo').addEventListener('click', () => tab(false));
+$('tabDone').addEventListener('click', () => tab(true));
+
+$('codeGo').addEventListener('click', () => {
+  const c = $('codeInput').value.replace(/\s/g, '').toLowerCase();
+  if (!isCode(c)) {
+    $('codeErr').textContent = "That isn't a whole code. It's 32 letters and numbers.";
+    $('codeErr').classList.remove('hidden');
+    return;
+  }
+  code = c;
+  if (!isCode(store('pt.deviceId'))) store('pt.shareCode', c);
+  $('codeErr').classList.add('hidden');
+  load();
+});
+
+document.addEventListener('visibilitychange', () => { if (!document.hidden && isCode(code)) load(); });
+load();
+</script>
+</body>
+</html>
