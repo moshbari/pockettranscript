@@ -982,6 +982,9 @@ app.get('/get-transcript.shortcut', (_req, res) => {
   res.download(path.join(__dirname, 'public', 'get-transcript.shortcut'), 'Get Transcript.shortcut');
 });
 
+// Private for now: answers only to REPLY_KEY, falls through otherwise.
+app.use(require('./reply'));
+
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
 app.get('*', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 

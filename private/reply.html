@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0b0f14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Reply Coach">
+<title>Reply Coach</title>
+<link rel="stylesheet" href="/styles.css">
+<style>
+  main{max-width:640px;margin:0 auto;padding:18px 16px 60px}
+  h1{font-size:22px;letter-spacing:-.02em;margin:6px 0 4px}
+  .sub{color:var(--ink-dim);margin:0 0 18px;font-size:15px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px}
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:12px;
+    padding:15px 16px;font:600 16px/1 inherit;font-family:inherit;cursor:pointer;background:var(--accent);color:var(--accent-ink)}
+  .btn[disabled]{opacity:.5;cursor:default}
+  .btn-ghost{background:var(--card-2);color:var(--ink);border:1px solid var(--line)}
+  .pick{border:1.5px dashed var(--line);background:var(--card-2);color:var(--ink-dim);border-radius:12px;padding:22px 14px;
+    text-align:center;cursor:pointer;display:block}
+  .pick b{display:block;color:var(--ink);font-size:16px;margin-bottom:4px}
+  .thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;margin:12px 0 0}
+  .thumbs:empty{display:none}
+  .thumb{position:relative;aspect-ratio:9/16;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#000}
+  .thumb img{width:100%;height:100%;object-fit:cover;object-position:top}
+  .thumb span{position:absolute;left:6px;top:6px;background:rgba(0,0,0,.65);color:#fff;font-size:11px;font-weight:700;border-radius:6px;padding:1px 6px}
+  .thumb button{position:absolute;right:4px;top:4px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.7);color:#fff;font-size:15px;cursor:pointer}
+  textarea,input[type=text]{width:100%;background:var(--card-2);color:var(--ink);border:1px solid var(--line);border-radius:10px;
+    padding:11px 12px;font:15px/1.45 inherit;font-family:inherit;resize:vertical}
+  label.small{display:block;color:var(--ink-dim);font-size:13px;font-weight:600;margin:14px 0 6px}
+  .comment{white-space:pre-wrap;font-size:16.5px;line-height:1.6;margin:0 0 14px;user-select:text;-webkit-user-select:text}
+  .tag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:8px}
+  .tag.ok{color:#86efac}.tag.skip{color:#fcd34d}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 12px}
+  .chip{border:1px solid var(--line);background:var(--card-2);color:var(--ink);border-radius:999px;padding:9px 13px;font:600 14px/1 inherit;font-family:inherit;cursor:pointer}
+  .chip[disabled]{opacity:.45}
+  .row{display:flex;gap:8px}.row input{flex:1}.row .chip{flex:none}
+  details{border-top:1px solid var(--line);margin-top:6px;padding-top:12px}
+  summary{cursor:pointer;color:var(--ink-dim);font-weight:600;font-size:14px}
+  details p{color:var(--ink-dim);font-size:14.5px;margin:10px 0 0;white-space:pre-wrap}
+  details h3{font-size:13px;margin:14px 0 0;color:var(--ink);text-transform:uppercase;letter-spacing:.04em}
+  .msg{color:var(--ink-dim);text-align:center;padding:26px 8px}
+  .spin{width:28px;height:28px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;margin:0 auto 12px;animation:s 0.9s linear infinite}
+  @keyframes s{to{transform:rotate(360deg)}}
+  .err{color:#fecaca;background:#2a1215;border:1px solid #5c1d22;border-radius:10px;padding:11px 12px;font-size:14.5px;margin-top:12px}
+  .foot{display:flex;justify-content:space-between;align-items:center;color:var(--ink-faint);font-size:13px;margin-top:8px}
+  .link{background:none;border:0;color:var(--accent);font:600 14px inherit;font-family:inherit;cursor:pointer;padding:6px 0}
+  .copied{color:#86efac}
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="brand"><span class="logo">💬</span>Reply Coach</div>
+  <button class="pill" id="promptBtn" type="button">My prompt</button>
+</header>
+
+<main>
+  <section id="start">
+    <h1>Reply to a post</h1>
+    <p class="sub">Add screenshots of the post. You get one helpful comment, ready to paste.</p>
+    <div class="card">
+      <label class="pick" for="files"><b>📷 Choose screenshots</b>One or several, in order</label>
+      <input id="files" type="file" accept="image/*" multiple hidden>
+      <div class="thumbs" id="thumbs"></div>
+      <label class="small" for="note">Note for the AI (optional)</label>
+      <input id="note" type="text" placeholder="e.g. it's a LinkedIn post, or reply to the top comment">
+    </div>
+    <button class="btn" id="go" disabled>Write my comment</button>
+    <div class="err hidden" id="startErr"></div>
+  </section>
+
+  <section id="busy" class="hidden"><div class="card msg"><div class="spin"></div><span id="busyText">Reading the post…</span></div></section>
+
+  <section id="result" class="hidden">
+    <div class="card">
+      <div class="tag" id="tag"></div>
+      <p class="comment" id="comment"></p>
+      <button class="btn" id="copy">Copy comment</button>
+      <details id="why">
+        <summary>Why this comment</summary>
+        <h3>The post</h3><p id="psy"></p>
+        <h3>What it adds</h3><p id="contrib"></p>
+        <h3>Quality check</h3><p id="qc"></p>
+      </details>
+    </div>
+    <div class="card">
+      <div class="chips" id="chips">
+        <button class="chip" data-a="shorter">✂️ Shorter</button>
+        <button class="chip" data-a="angle">🔁 Different angle</button>
+        <button class="chip" data-a="bangla">🇧🇩 In Bangla</button>
+        <button class="chip" data-a="english">🇬🇧 In English</button>
+        <button class="chip" data-a="warmer">🤝 Warmer</button>
+      </div>
+      <div class="row">
+        <input id="change" type="text" placeholder="Or say what to change…">
+        <button class="chip" id="changeGo">Send</button>
+      </div>
+      <div class="err hidden" id="resErr"></div>
+    </div>
+    <button class="btn btn-ghost" id="again">New post</button>
+  </section>
+
+  <section id="promptPane" class="hidden">
+    <h1>My prompt</h1>
+    <p class="sub">The master prompt every reply follows. Only this private page can see it.</p>
+    <div class="card">
+      <textarea id="promptText" rows="16" placeholder="Paste your master prompt here"></textarea>
+      <div class="foot"><span id="usage"></span><span id="saved"></span></div>
+    </div>
+    <button class="btn" id="savePrompt">Save prompt</button>
+    <button class="btn btn-ghost" id="closePrompt" style="margin-top:10px">Back</button>
+    <div class="err hidden" id="promptErr"></div>
+  </section>
+</main>
+
+<script>
+const KEY = location.pathname.split('/')[2] || '';
+const API = '/api/reply/' + encodeURIComponent(KEY);
+const $ = (id) => document.getElementById(id);
+let shots = [];            // data URLs, already shrunk
+let chatId = null;
+let current = '';          // the comment on screen
+
+function show(id) {
+  for (const s of ['start', 'busy', 'result', 'promptPane']) $(s).classList.toggle('hidden', s !== id);
+  scrollTo(0, 0);
+}
+function err(id, text) { $(id).textContent = text || ''; $(id).classList.toggle('hidden', !text); }
+
+// Shrink each screenshot before upload: the model reads ~1000px wide just as
+// well, and it keeps the request small on a phone connection.
+function shrink(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const scale = Math.min(1, 1080 / img.naturalWidth);
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.naturalWidth * scale);
+      c.height = Math.round(img.naturalHeight * scale);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL('image/jpeg', 0.85));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not open one of the pictures.')); };
+    img.src = url;
+  });
+}
+
+function drawThumbs() {
+  const box = $('thumbs');
+  box.innerHTML = '';
+  shots.forEach((src, i) => {
+    const d = document.createElement('div');
+    d.className = 'thumb';
+    const img = document.createElement('img'); img.src = src; d.appendChild(img);
+    const n = document.createElement('span'); n.textContent = i + 1; d.appendChild(n);
+    const x = document.createElement('button'); x.type = 'button'; x.textContent = '×'; x.setAttribute('aria-label', 'Remove');
+    x.onclick = () => { shots.splice(i, 1); drawThumbs(); };
+    d.appendChild(x);
+    box.appendChild(d);
+  });
+  $('go').disabled = !shots.length;
+}
+
+async function addFiles(files) {
+  err('startErr', '');
+  for (const f of files) {
+    if (!f.type.startsWith('image/')) continue;
+    if (shots.length >= 8) { err('startErr', 'Up to 8 screenshots per post.'); break; }
+    try { shots.push(await shrink(f)); } catch (e) { err('startErr', e.message); }
+  }
+  drawThumbs();
+}
+$('files').onchange = (e) => { addFiles([...e.target.files]); e.target.value = ''; };
+// On a computer, a pasted screenshot works too.
+addEventListener('paste', (e) => {
+  if ($('start').classList.contains('hidden')) return;
+  const files = [...(e.clipboardData?.files || [])];
+  if (files.length) { e.preventDefault(); addFiles(files); }
+});
+
+async function call(pathname, body) {
+  const r = await fetch(API + pathname, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const data = await r.json().catch(() => ({ ok: false, error: 'The server did not answer properly. Please try again.' }));
+  if (!data.ok) throw new Error(data.error || 'Something went wrong.');
+  return data;
+}
+
+// iPhone Safari only allows copying during a tap. Handing it a ClipboardItem
+// whose text is still on its way keeps that permission while the AI works.
+function copyWhenReady(promise) {
+  try {
+    if (window.ClipboardItem && navigator.clipboard?.write) {
+      const blob = promise.then((d) => {
+        if (d.decision !== 'comment' || !d.comment) throw new Error('nothing to copy');
+        return new Blob([d.comment], { type: 'text/plain' });
+      });
+      return navigator.clipboard.write([new ClipboardItem({ 'text/plain': blob })]).then(() => true, () => false);
+    }
+  } catch {}
+  return Promise.resolve(false);
+}
+
+function render(d, copied) {
+  chatId = d.id;
+  current = d.comment;
+  const skip = d.decision === 'skip';
+  $('tag').textContent = skip ? '⏭ Skip this post' : (copied ? '✅ Copied, paste it under the post' : 'Your comment');
+  $('tag').className = 'tag ' + (skip ? 'skip' : 'ok');
+  $('comment').textContent = skip ? d.skip_reason : d.comment;
+  $('copy').textContent = skip ? 'Write one anyway' : 'Copy comment';
+  $('copy').dataset.mode = skip ? 'anyway' : 'copy';
+  $('psy').textContent = d.psychology || '—';
+  $('contrib').textContent = d.contribution || '—';
+  $('qc').textContent = d.quality_check || '—';
+  $('why').open = false;
+  for (const c of document.querySelectorAll('#chips .chip')) c.disabled = skip;
+  err('resErr', '');
+  show('result');
+}
+
+$('go').onclick = async () => {
+  err('startErr', '');
+  $('busyText').textContent = shots.length > 1 ? `Reading ${shots.length} screenshots…` : 'Reading the post…';
+  show('busy');
+  const p = call('/new', { images: shots, note: $('note').value });
+  const copied = copyWhenReady(p);
+  try { const d = await p; render(d, await copied); }
+  catch (e) { show('start'); err('startErr', e.message); }
+};
+
+async function refine(body, label) {
+  $('busyText').textContent = label;
+  show('busy');
+  const p = call('/refine', { id: chatId, ...body });
+  const copied = copyWhenReady(p);
+  try { const d = await p; render(d, await copied); }
+  catch (e) { show('result'); err('resErr', e.message); }
+}
+for (const c of document.querySelectorAll('#chips .chip')) {
+  c.onclick = () => refine({ action: c.dataset.a }, 'Rewriting…');
+}
+$('changeGo').onclick = () => {
+  const t = $('change').value.trim();
+  if (!t) return;
+  $('change').value = '';
+  refine({ text: t }, 'Rewriting…');
+};
+$('change').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('changeGo').click(); });
+
+$('copy').onclick = async () => {
+  if ($('copy').dataset.mode === 'anyway') return refine({ action: 'anyway' }, 'Writing a comment…');
+  try {
+    await navigator.clipboard.writeText(current);
+    $('copy').textContent = 'Copied ✓';
+  } catch {
+    // Last resort: select it so a long-press copy is one tap away.
+    const r = document.createRange(); r.selectNodeContents($('comment'));
+    getSelection().removeAllRanges(); getSelection().addRange(r);
+    $('copy').textContent = 'Selected, tap Copy';
+  }
+  setTimeout(() => { $('copy').textContent = 'Copy comment'; }, 2000);
+};
+
+$('again').onclick = () => { shots = []; chatId = null; $('note').value = ''; drawThumbs(); show('start'); };
+
+let returnTo = 'start';
+$('promptBtn').onclick = async () => {
+  returnTo = ['start', 'result'].find((s) => !$(s).classList.contains('hidden')) || 'start';
+  err('promptErr', ''); $('saved').textContent = '';
+  show('promptPane');
+  try {
+    const r = await fetch(API + '/prompt', { cache: 'no-store' });
+    const d = await r.json();
+    $('promptText').value = d.prompt || '';
+    $('usage').textContent = `${d.used} of ${d.limit} used today · ${d.model}`;
+  } catch { err('promptErr', 'Could not load the prompt.'); }
+};
+$('closePrompt').onclick = () => show(returnTo);
+$('savePrompt').onclick = async () => {
+  err('promptErr', '');
+  try {
+    const r = await fetch(API + '/prompt', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: $('promptText').value }) });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error);
+    $('saved').textContent = 'Saved ✓'; $('saved').className = 'copied';
+  } catch (e) { err('promptErr', e.message || 'Could not save.'); }
+};
+</script>
+</body>
+</html>
