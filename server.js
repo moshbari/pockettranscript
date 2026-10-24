@@ -698,15 +698,128 @@ async function callTranscriber(pathname, body) {
 }
 
 async function runLink(job) {
+  let result;
   try {
-    finishJob(job, await callTranscriber('/transcribe', {
+    result = await callTranscriber('/transcribe', {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url: job.url }),
-    }));
+    });
   } catch (e) {
-    finishJob(job, { error: `Couldn't reach the transcriber: ${e.message}` });
+    result = { error: `Couldn't reach the transcriber: ${e.message}` };
+  }
+  // No video to transcribe: it may be a text post. Read its words from the page.
+  if (!(result.text && result.text.trim())) {
+    const post = await readPostFromLink(job.url).catch(() => null);
+    if (post) {
+      job.title = post.title;
+      result = { text: post.text, segments: [] };
+    } else {
+      result = { error: "I couldn't get a video or the post's words from this link. If it's a text post, take screenshots of it, then share it again." };
+    }
+  }
+  finishJob(job, result);
+}
+
+// ========================================================== text posts =====
+// A text post can't be transcribed. Two ways in: its words straight from the
+// link (public X / LinkedIn / many sites), or screenshots read by a cheap
+// OpenAI model. Either way the post's link rides along, so after ChatGPT
+// answers you can still get back to the post to comment.
+const OCR_KEY = process.env.REPLY_OPENAI_KEY || '';
+const OCR_MODEL = process.env.OCR_MODEL || 'gpt-6-luna';
+const MAX_SHOTS = 8;
+
+function siteName(url) {
+  try { return new URL(url).hostname.replace(/^(www|m|mobile|web)\./, ''); } catch { return ''; }
+}
+
+const decodeEntities = (s) => String(s || '')
+  .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(+n))
+  .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
+  .replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+
+async function readPostFromLink(url) {
+  const site = siteName(url);
+  // X: the public embed feed has the full text without a login.
+  const tweet = url.match(/(?:twitter|x)\.com\/[^/]+\/status(?:es)?\/(\d+)/);
+  if (tweet) {
+    const r = await fetch(`https://cdn.syndication.twimg.com/tweet-result?id=${tweet[1]}&token=x`, { signal: AbortSignal.timeout(10000) });
+    if (r.ok) {
+      const t = await r.json();
+      if (t.text) return { title: `Post by ${t.user?.name || 'someone'} on X`, text: decodeEntities(t.text) };
+    }
+    return null;
+  }
+  // Everything else: the page's own preview text. Facebook mostly answers with
+  // a login page, which has no useful description, so we say so instead.
+  const r = await fetch(url, {
+    redirect: 'follow', signal: AbortSignal.timeout(12000),
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; facebookexternalhit/1.1; +http://www.facebook.com/externalhit_uatext.php)', 'Accept-Language': 'en' },
+  });
+  if (!r.ok) return null;
+  const html = (await r.text()).slice(0, 600000);
+  const meta = (prop) => {
+    const m = html.match(new RegExp(`<meta[^>]+(?:property|name)=["']${prop}["'][^>]+content=["']([^"']*)["']`, 'i'))
+      || html.match(new RegExp(`<meta[^>]+content=["']([^"']*)["'][^>]+(?:property|name)=["']${prop}["']`, 'i'));
+    return m ? decodeEntities(m[1]).trim() : '';
+  };
+  const text = meta('og:description') || meta('description');
+  const title = meta('og:title') || site;
+  if (text.length < 40 || /log in|sign up|see posts, photos and more/i.test(text)) return null;
+  return { title: title || `Post on ${site}`, text };
+}
+
+async function readScreenshots(images) {
+  if (!OCR_KEY) throw new Error('Reading screenshots is not set up on the server yet.');
+  const content = [{ type: 'text', text: `These ${images.length} screenshot(s), in order, show one social media post. Write out the post's text exactly as written, in reading order, joining the screenshots into one text without repeating lines that appear on two of them. Keep the original language and spelling; never translate or fix it. Start with the author's name on its own line if it is visible. Leave out the app's own buttons and counts (Like, Comment, Share, reactions, view counts, menus, the keyboard, the status bar). If the post contains a picture, add one line like [Picture: what it shows, and any words in it]. Output only the post.` }];
+  for (const url of images) content.push({ type: 'image_url', image_url: { url, detail: 'high' } });
+  const r = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${OCR_KEY}` },
+    body: JSON.stringify({ model: OCR_MODEL, messages: [{ role: 'user', content }] }),
+    signal: AbortSignal.timeout(120000),
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error?.message || `The picture reader answered ${r.status}`);
+  return String(data.choices?.[0]?.message?.content || '').trim();
+}
+
+async function runScreenshots(job, images) {
+  try {
+    const text = await readScreenshots(images);
+    finishJob(job, text ? { text, segments: [] } : { error: "I couldn't find any words in those screenshots." });
+  } catch (e) {
+    finishJob(job, { error: e.message });
   }
 }
+
+// The apps send { images: [jpeg data URLs, in order], url: the post's link (optional) }.
+app.post('/api/grab-post', (req, res) => {
+  const given = String(req.query.deviceId || '').trim().toLowerCase();
+  const anon = !isValidDeviceId(given);
+  const d = getDevice(anon ? ANON_ID : resolveId(given));
+  const images = (Array.isArray(req.body?.images) ? req.body.images : [])
+    .filter((s) => typeof s === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(s))
+    .slice(0, MAX_SHOTS);
+  const url = firstUrl(req.body?.url || '');
+  if (!images.length) return res.status(400).json({ ok: false, error: 'Add at least one screenshot.' });
+
+  // Same daily cap as other paid work for codes with no computer behind them.
+  if (anon || !d.lastSeen) {
+    const day = new Date().toISOString().slice(0, 10);
+    const u = anonUse.get(req.ip);
+    const use = u && u.day === day ? u : { day, count: 0 };
+    if (use.count >= ANON_DAILY_LIMIT) return res.status(429).json({ ok: false, error: `That's today's ${ANON_DAILY_LIMIT} free reads. More tomorrow!` });
+    use.count++;
+    anonUse.set(req.ip, use);
+  }
+
+  const site = siteName(url);
+  const shots = images.length > 1 ? `${images.length} screenshots` : 'screenshot';
+  const job = newServerJob(d, { url, title: site ? `Post on ${site} (${shots})` : `Post from ${shots}` });
+  runScreenshots(job, images);
+  res.json({ ok: true, id: job.id });
+});
 
 // "0:07" or "1:02:07", the same stamps the desktop .txt uses.
 function stamp(sec) {
