@@ -1288,6 +1288,20 @@ app.post('/api/saved/:id/use', (req, res) => {
     finishJob(job, { text: it.text, segments: [] });
     return res.json({ ok: true, id: job.id });
   }
+  if (it.shots) {
+    // Screenshots whose words couldn't be read when saved: read them now.
+    const images = [];
+    for (let n = 0; n < it.shots; n++) {
+      try { images.push('data:image/jpeg;base64,' + fs.readFileSync(path.join(SAVED_DIR, `${it.id}-${n}.jpg`)).toString('base64')); } catch { /* gone */ }
+    }
+    if (images.length) {
+      const job = newServerJob(d, { url: it.url, title: it.title, source: 'screenshots' });
+      runScreenshots(job, images).then(() => {
+        if (job.status === 'done' && !it.text) { it.text = job.plain; it.note = ''; save(); }
+      });
+      return res.json({ ok: true, id: job.id });
+    }
+  }
   if (!it.url) return res.status(400).json({ ok: false, error: "There's nothing to read in this one yet." });
   req.query.deviceId = owner;
   req.body = { text: it.url };
