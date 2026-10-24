@@ -49,6 +49,8 @@
   .foot{display:flex;justify-content:space-between;align-items:center;color:var(--ink-faint);font-size:13px;margin-top:8px}
   .link{background:none;border:0;color:var(--accent);font:600 14px inherit;font-family:inherit;cursor:pointer;padding:6px 0}
   .copied{color:#86efac}
+  .home{color:var(--ink);text-decoration:none}
+  .home .chev{font-size:24px;line-height:1;margin-right:-2px;color:var(--ink-dim)}
   .pane-head{display:flex;align-items:center;gap:12px;margin:6px 0 4px}
   .pane-head h1{margin:0}
   .back{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:8px 14px;font:600 15px/1 inherit;font-family:inherit;cursor:pointer}
@@ -57,7 +59,7 @@
 </head>
 <body>
 <header class="bar">
-  <div class="brand"><span class="logo">💬</span>Comment Coach</div>
+  <a class="brand home" href="/" aria-label="Back to Get Transcript"><span class="chev">‹</span><span class="logo">💬</span>Comment Coach</a>
   <button class="pill hidden" id="promptBtn" type="button">The prompt</button>
 </header>
 
