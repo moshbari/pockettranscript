@@ -16,7 +16,7 @@ const fs = require('fs');
 
 const KEY = process.env.REPLY_KEY || '';
 const OPENAI_KEY = process.env.REPLY_OPENAI_KEY || '';
-const MODEL = process.env.REPLY_MODEL || 'gpt-5-mini';
+const MODEL = process.env.REPLY_MODEL || 'gpt-6.1-sol';
 const DAILY_LIMIT = Number(process.env.REPLY_DAILY_LIMIT || 150);   // a backstop, not a plan
 const CHAT_TTL_MS = 2 * 3600 * 1000;
 const MAX_IMAGES = 8;
