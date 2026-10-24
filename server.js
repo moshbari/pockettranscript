@@ -697,7 +697,34 @@ async function callTranscriber(pathname, body) {
   return data;
 }
 
+// A text post (no video) can't be transcribed, and "trying anyway" picked up
+// whatever video sat elsewhere on the page. So for these links we don't fetch
+// anything: the job is the link plus a note, and the person attaches their
+// screenshots in ChatGPT. The Shortcut needs no change: it still gets a
+// "transcript", the menu, and copies prompt + link (24 Oct 2026).
+const SCREENSHOTS_NOTE = "(This is a text post. I'm attaching screenshots of it to this message: read the post from them.)";
+
+function isTextPostLink(url) {
+  let u;
+  try { u = new URL(url); } catch { return false; }
+  const host = u.hostname.replace(/^(www|m|mobile|web|business)\./, '');
+  const path = u.pathname;
+  if (host === 'facebook.com' || host === 'fb.com') {
+    if (/\/(reel|reels|videos|watch|live)\b/.test(path) || /^\/share\/(v|r)\//.test(path)) return false;
+    return /\/(posts|permalink\.php|story\.php|photo|photos|groups|share\/p)\b/.test(path) || u.searchParams.has('story_fbid');
+  }
+  if (host === 'linkedin.com') return /^\/(posts|feed\/update|pulse)\//.test(path);
+  if (host === 'threads.net' || host === 'threads.com') return true;
+  return false;
+}
+
+function finishAsScreenshotsPost(job) {
+  job.title = job.title || `Post on ${siteName(job.url)}`;
+  finishJob(job, { text: SCREENSHOTS_NOTE, segments: [] });
+}
+
 async function runLink(job) {
+  if (isTextPostLink(job.url)) return finishAsScreenshotsPost(job);
   let result;
   try {
     result = await callTranscriber('/transcribe', {
@@ -714,7 +741,8 @@ async function runLink(job) {
       job.title = post.title;
       result = { text: post.text, segments: [] };
     } else {
-      result = { error: "I couldn't get a video or the post's words from this link. If it's a text post, take screenshots of it, then share it again." };
+      // Nothing to read: treat it as a text post the person will screenshot.
+      return finishAsScreenshotsPost(job);
     }
   }
   finishJob(job, result);
@@ -816,7 +844,7 @@ app.post('/api/grab-post', (req, res) => {
 
   const site = siteName(url);
   const shots = images.length > 1 ? `${images.length} screenshots` : 'screenshot';
-  const job = newServerJob(d, { url, title: site ? `Post on ${site} (${shots})` : `Post from ${shots}` });
+  const job = newServerJob(d, { url, source: 'screenshots', title: site ? `Post on ${site} (${shots})` : `Post from ${shots}` });
   runScreenshots(job, images);
   res.json({ ok: true, id: job.id });
 });
@@ -921,7 +949,10 @@ function recentJob(d, { urls = [], body = '' }) {
     .sort((a, b) => b.createdAt - a.createdAt);
   for (const u of urls) {
     const vid = extractYtId(u);
-    const hit = done.find((j) => (vid ? j.videoId === vid : j.url === u));
+    // A text post only reuses an answer that really is the post: one read from
+    // screenshots, or the screenshots note. Older tries fetched other things.
+    const usable = (j) => !isTextPostLink(u) || j.source === 'screenshots' || j.plain === SCREENSHOTS_NOTE;
+    const hit = done.find((j) => (vid ? j.videoId === vid : j.url === u && usable(j)));
     if (hit) return hit;
   }
   const flat = squash(body);
