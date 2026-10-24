@@ -1309,6 +1309,36 @@ app.post('/api/saved/:id/use', (req, res) => {
   grab(req, res);
 });
 
+// ======================================================== app versions ======
+// The newest app in each store, so the apps and the website can say "you have
+// 1.0.1, the newest is 1.0.1". The App Store answers for iPhone; for Android the
+// release title on the download repo carries it (scripts/publish-apk.sh sets it).
+const APP_STORE_URL = 'https://apps.apple.com/app/get-transcript/id6820350358';
+const APK_URL = 'https://github.com/moshbari/gettranscript-downloads/releases/latest/download/GetTranscript.apk';
+let appVersions = { at: 0, ios: '', android: '' };
+
+async function readAppVersions() {
+  const [ios, android] = await Promise.all([
+    fetch('https://itunes.apple.com/lookup?id=6820350358&country=us', { signal: AbortSignal.timeout(8000) })
+      .then((r) => r.json()).then((j) => (j.results && j.results[0] && j.results[0].version) || '').catch(() => ''),
+    fetch('https://api.github.com/repos/moshbari/gettranscript-downloads/releases/tags/latest',
+      { headers: { 'User-Agent': 'pocket.99dfy.com' }, signal: AbortSignal.timeout(8000) })
+      .then((r) => r.json()).then((j) => ((j.name || '').match(/\d+(?:\.\d+)+/) || [''])[0]).catch(() => ''),
+  ]);
+  // Keep the last good answer when a store doesn't reply.
+  appVersions = { at: Date.now(), ios: ios || appVersions.ios, android: android || appVersions.android };
+}
+
+app.get('/api/app-versions', async (_req, res) => {
+  if (Date.now() - appVersions.at > 30 * 60 * 1000) await readAppVersions();
+  res.set('Cache-Control', 'public, max-age=300');
+  res.json({
+    ok: true,
+    ios: { version: appVersions.ios, url: APP_STORE_URL },
+    android: { version: appVersions.android, url: APK_URL },
+  });
+});
+
 // ============================================================= static =======
 app.get('/health', (_req, res) => res.json({
   ok: true,

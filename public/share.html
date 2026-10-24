@@ -56,6 +56,7 @@
   <section class="step">
     <div class="step-head"><span class="step-num">1</span><h2>Get the free app</h2></div>
     <a class="btn btn-primary btn-lg big-add" href="https://apps.apple.com/app/get-transcript/id6820350358">Get it on the App Store</a>
+    <p class="small" data-appver-line hidden style="margin:0">Newest version on the App Store: <b data-appver="ios"></b>. Your version is in the app under <b>Settings</b>.</p>
     <p class="after-tap">Install it and open it once. That's all the setup. No code, nothing to paste.</p>
   </section>
 
@@ -140,5 +141,6 @@ document.getElementById('copyCode').addEventListener('click', async () => {
   toast((await copy()) ? 'Code copied ✓' : 'Press and hold the code to copy it');
 });
 </script>
+<script src="/versions.js"></script>
 </body>
 </html>

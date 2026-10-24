@@ -235,3 +235,6 @@ body{
 /* A quiet link at the very bottom; not meant to draw the eye. */
 .tinyfoot{text-align:center;margin:28px 0 calc(env(safe-area-inset-bottom) + 18px);font-size:11px}
 .tinyfoot a{color:var(--ink-faint);opacity:.55;text-decoration:none}
+.pick-ver{font-size:12px;color:var(--ink-faint)}
+.pick-ver b{color:var(--ink-dim);font-weight:650}
+.appvers{color:var(--ink-faint);margin-top:18px;text-align:center;font-size:13px}
