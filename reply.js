@@ -159,7 +159,10 @@ router.get('/api/reply/:key/prompt', (_req, res) => {
   res.json({ ok: true, prompt: state.prompt, model: MODEL, used: state.usage.day === new Date().toISOString().slice(0, 10) ? state.usage.count : 0, limit: DAILY_LIMIT });
 });
 
-router.put('/api/reply/:key/prompt', (req, res) => {
+// Changing the prompt takes the long key, never the password members get;
+// the page has no edit box at all.
+router.put('/api/reply/:key/prompt', (req, res, next) => {
+  if (!same(req.params.key, KEY)) return next('router');
   const p = String(req.body?.prompt || '').trim();
   if (p.length < 20) return res.status(400).json({ ok: false, error: 'That prompt looks empty.' });
   state.prompt = p;

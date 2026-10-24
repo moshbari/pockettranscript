@@ -49,12 +49,13 @@
   .foot{display:flex;justify-content:space-between;align-items:center;color:var(--ink-faint);font-size:13px;margin-top:8px}
   .link{background:none;border:0;color:var(--accent);font:600 14px inherit;font-family:inherit;cursor:pointer;padding:6px 0}
   .copied{color:#86efac}
+  .prompt-text{white-space:pre-wrap;font-size:14.5px;line-height:1.55;color:var(--ink);max-height:60vh;overflow-y:auto;user-select:text;-webkit-user-select:text}
 </style>
 </head>
 <body>
 <header class="bar">
   <div class="brand"><span class="logo">💬</span>Comment Coach</div>
-  <button class="pill hidden" id="promptBtn" type="button">My prompt</button>
+  <button class="pill hidden" id="promptBtn" type="button">The prompt</button>
 </header>
 
 <main>
@@ -114,13 +115,14 @@
   </section>
 
   <section id="promptPane" class="hidden">
-    <h1>My prompt</h1>
-    <p class="sub">The master prompt every reply follows. Only this private page can see it.</p>
-    <div class="card">
-      <textarea id="promptText" rows="16" placeholder="Paste your master prompt here"></textarea>
-      <div class="foot"><span id="usage"></span><span id="saved"></span></div>
+    <h1>The prompt</h1>
+    <p class="sub">Every comment follows this prompt. Copy it to use in ChatGPT or anywhere else.</p>
+    <button class="btn" id="copyPrompt">📋 Copy prompt</button>
+    <div class="card" style="margin-top:14px">
+      <div class="prompt-text" id="promptText">Loading…</div>
+      <div class="foot"><span id="usage"></span></div>
     </div>
-    <button class="btn" id="savePrompt">Save prompt</button>
+    <button class="btn" id="copyPrompt2">📋 Copy prompt</button>
     <button class="btn btn-ghost" id="closePrompt" style="margin-top:10px">Back</button>
     <div class="err hidden" id="promptErr"></div>
   </section>
@@ -283,27 +285,34 @@ $('copy').onclick = async () => {
 $('again').onclick = () => { shots = []; chatId = null; $('note').value = ''; drawThumbs(); show('start'); };
 
 let returnTo = 'start';
+let promptText = '';
 $('promptBtn').onclick = async () => {
   returnTo = ['start', 'result'].find((s) => !$(s).classList.contains('hidden')) || 'start';
-  err('promptErr', ''); $('saved').textContent = '';
+  err('promptErr', '');
   show('promptPane');
   try {
     const r = await fetch(API + '/prompt', { cache: 'no-store' });
     const d = await r.json();
-    $('promptText').value = d.prompt || '';
+    promptText = d.prompt || '';
+    $('promptText').textContent = promptText || 'No prompt yet.';
     $('usage').textContent = `${d.used} of ${d.limit} used today · ${d.model}`;
   } catch { err('promptErr', 'Could not load the prompt.'); }
 };
 $('closePrompt').onclick = () => show(returnTo);
-$('savePrompt').onclick = async () => {
-  err('promptErr', '');
-  try {
-    const r = await fetch(API + '/prompt', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: $('promptText').value }) });
-    const d = await r.json();
-    if (!d.ok) throw new Error(d.error);
-    $('saved').textContent = 'Saved ✓'; $('saved').className = 'copied';
-  } catch (e) { err('promptErr', e.message || 'Could not save.'); }
-};
+// Read-only on purpose: members see and copy the prompt, nobody edits it here.
+async function copyPrompt(btn) {
+  if (!promptText) return;
+  const label = btn.textContent;
+  try { await navigator.clipboard.writeText(promptText); btn.textContent = '✅ Copied'; }
+  catch {
+    const r = document.createRange(); r.selectNodeContents($('promptText'));
+    getSelection().removeAllRanges(); getSelection().addRange(r);
+    btn.textContent = 'Selected, tap Copy';
+  }
+  setTimeout(() => { btn.textContent = label; }, 2000);
+}
+$('copyPrompt').onclick = () => copyPrompt($('copyPrompt'));
+$('copyPrompt2').onclick = () => copyPrompt($('copyPrompt2'));
 
 async function keyWorks(k) {
   if (!k) return false;
