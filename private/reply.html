@@ -7,8 +7,8 @@
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0b0f14">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Reply Coach">
-<title>Reply Coach</title>
+<meta name="apple-mobile-web-app-title" content="Comment Coach">
+<title>Comment Coach</title>
 <link rel="stylesheet" href="/styles.css">
 <style>
   main{max-width:640px;margin:0 auto;padding:18px 16px 60px}
@@ -53,12 +53,22 @@
 </head>
 <body>
 <header class="bar">
-  <div class="brand"><span class="logo">💬</span>Reply Coach</div>
-  <button class="pill" id="promptBtn" type="button">My prompt</button>
+  <div class="brand"><span class="logo">💬</span>Comment Coach</div>
+  <button class="pill hidden" id="promptBtn" type="button">My prompt</button>
 </header>
 
 <main>
-  <section id="start">
+  <section id="lock" class="hidden">
+    <h1>Comment Coach</h1>
+    <p class="sub">Enter your password. This phone will remember it.</p>
+    <div class="card">
+      <input id="pw" type="password" autocomplete="current-password" placeholder="Password">
+    </div>
+    <button class="btn" id="unlock">Open</button>
+    <div class="err hidden" id="lockErr"></div>
+  </section>
+
+  <section id="start" class="hidden">
     <h1>Reply to a post</h1>
     <p class="sub">Add screenshots of the post. You get one helpful comment, ready to paste.</p>
     <div class="card">
@@ -117,15 +127,19 @@
 </main>
 
 <script>
-const KEY = location.pathname.split('/')[2] || '';
-const API = '/api/reply/' + encodeURIComponent(KEY);
+// The key comes from an /r/<key> link or the password typed once at /coach;
+// either way it's kept on this device so the short /coach address just works.
+const store = { get() { try { return localStorage.getItem('rc.key') || ''; } catch { return ''; } },
+                set(v) { try { v ? localStorage.setItem('rc.key', v) : localStorage.removeItem('rc.key'); } catch {} } };
+let KEY = location.pathname.startsWith('/r/') ? location.pathname.split('/')[2] || '' : store.get();
+let API = '/api/reply/' + encodeURIComponent(KEY);
 const $ = (id) => document.getElementById(id);
 let shots = [];            // data URLs, already shrunk
 let chatId = null;
 let current = '';          // the comment on screen
 
 function show(id) {
-  for (const s of ['start', 'busy', 'result', 'promptPane']) $(s).classList.toggle('hidden', s !== id);
+  for (const s of ['lock', 'start', 'busy', 'result', 'promptPane']) $(s).classList.toggle('hidden', s !== id);
   scrollTo(0, 0);
 }
 function err(id, text) { $(id).textContent = text || ''; $(id).classList.toggle('hidden', !text); }
@@ -290,6 +304,32 @@ $('savePrompt').onclick = async () => {
     $('saved').textContent = 'Saved ✓'; $('saved').className = 'copied';
   } catch (e) { err('promptErr', e.message || 'Could not save.'); }
 };
+
+async function keyWorks(k) {
+  if (!k) return false;
+  try {
+    const r = await fetch('/api/reply/' + encodeURIComponent(k) + '/prompt', { cache: 'no-store' });
+    return r.ok && (await r.json()).ok === true;
+  } catch { return false; }
+}
+function unlocked() {
+  store.set(KEY);
+  API = '/api/reply/' + encodeURIComponent(KEY);
+  $('promptBtn').classList.remove('hidden');
+  if (location.pathname !== '/coach') history.replaceState(null, '', '/coach');   // keep the key out of the address bar
+  show('start');
+}
+$('unlock').onclick = async () => {
+  err('lockErr', '');
+  const k = $('pw').value.trim();
+  if (await keyWorks(k)) { KEY = k; unlocked(); }
+  else err('lockErr', 'That password is not right.');
+};
+$('pw').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('unlock').click(); });
+(async () => {
+  if (await keyWorks(KEY)) unlocked();
+  else { store.set(''); show('lock'); }
+})();
 </script>
 </body>
 </html>

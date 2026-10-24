@@ -15,6 +15,9 @@ const path = require('path');
 const fs = require('fs');
 
 const KEY = process.env.REPLY_KEY || '';
+// A short password Mosh can type once per device at /coach (the page then
+// remembers it). Either one unlocks everything.
+const PASSWORD = process.env.REPLY_PASSWORD || '';
 const OPENAI_KEY = process.env.REPLY_OPENAI_KEY || '';
 const MODEL = process.env.REPLY_MODEL || 'gpt-6.1-sol';
 const DAILY_LIMIT = Number(process.env.REPLY_DAILY_LIMIT || 150);   // a backstop, not a plan
@@ -72,10 +75,22 @@ setInterval(() => {
 }, 10 * 60 * 1000).unref();
 
 // Constant-time compare, so the key can't be guessed a character at a time.
-function keyOk(k) {
-  if (!KEY || typeof k !== 'string') return false;
-  const a = Buffer.from(k), b = Buffer.from(KEY);
+function same(k, secret) {
+  if (!secret || typeof k !== 'string') return false;
+  const a = Buffer.from(k), b = Buffer.from(secret);
   return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+const keyOk = (k) => same(k, KEY) || same(k, PASSWORD);
+
+// A password can be typed, so it can be guessed: 10 wrong tries an hour per
+// address, then every try is wrong.
+const misses = new Map();   // ip -> { hour, n }
+function tooManyMisses(ip, missed) {
+  const hour = Math.floor(Date.now() / 3600000);
+  let m = misses.get(ip);
+  if (!m || m.hour !== hour) { m = { hour, n: 0 }; misses.set(ip, m); }
+  if (missed) m.n++;
+  return m.n > 10;
 }
 
 function useOne() {
@@ -122,8 +137,16 @@ const router = express.Router();
 // Every route below needs the key; anything else falls through to the normal
 // 404/app shell, so the feature is invisible.
 router.use(['/r/:key', '/api/reply/:key'], (req, res, next) => {
-  if (!keyOk(req.params.key)) return next('router');
+  const ok = keyOk(req.params.key);
+  if (tooManyMisses(req.ip, !ok) || !ok) return next('router');
   next();
+});
+
+// The discreet door from the site's footer. The page itself holds nothing
+// private; it asks for the password and every call it makes needs it.
+router.get('/coach', (_req, res) => {
+  res.set({ 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex, nofollow', 'Referrer-Policy': 'no-referrer' });
+  res.sendFile(path.join(__dirname, 'private', 'reply.html'));
 });
 
 router.get('/r/:key', (_req, res) => {
