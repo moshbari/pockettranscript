@@ -1002,7 +1002,7 @@ function grab(req, res) {
   if (typed && !allUrls(typed).length) {
     // Words with no link and nothing we made before: not something to transcribe.
     fs.rm(req.file.path, { force: true }, () => {});
-    return res.status(400).json({ ok: false, error: "I didn't find a link or a file in what you shared." });
+    return res.status(400).json({ ok: false, error: "No link found. Copy the post's link first (Share → Copy link), then run this again. Or tap Share on the post and pick Get Transcript." });
   }
   if (typed) {
     // A link inside copied text: treat it like a shared link.
@@ -1033,7 +1033,7 @@ function grab(req, res) {
   }
 
   const url = firstUrl(req.body && (req.body.url || req.body.text));
-  if (!url) return res.status(400).json({ ok: false, error: "I didn't find a link or a file in what you shared." });
+  if (!url) return res.status(400).json({ ok: false, error: "No link found. Copy the post's link first (Share → Copy link), then run this again. Or tap Share on the post and pick Get Transcript." });
 
   const videoId = extractYtId(url);
   if (videoId) {
