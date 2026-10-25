@@ -221,7 +221,9 @@ body{
 .howto-vid{margin:0 0 18px}
 .howto-vid:last-child{margin-bottom:0}
 @media (min-width:560px){.howto{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
-  .howto-title{grid-column:1/-1}.howto-vid{margin:0}}
+  .howto-title{grid-column:1/-1}.howto-vid{margin:0}
+  /* an odd last video sits centred under the pair, the same size as them */
+  .howto-vid:nth-of-type(odd):last-child{grid-column:1/-1;width:calc((100% - 14px)/2);justify-self:center}}
 .howto-vid figcaption{display:flex;align-items:center;justify-content:center;gap:8px;
   margin-bottom:10px;font-size:14.5px;font-weight:650;color:var(--ink)}
 .howto-num{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;
