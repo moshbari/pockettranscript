@@ -27,4 +27,24 @@ function openingHint() {
 Never start with "One thing", "One tip", "One item" or any "One …" opener, never announce the point ("Adding to this", "Quick tip"), and don't open by pointing back at the post with "This", "That", "These", "Those" or "Your". The first words must not be ones that could start a comment under any other post.`;
 }
 
-module.exports = { openingHint };
+// Posts and threads had the same problem: every one opened on the input's
+// first line, and every story starred "Rashed". Same idea, per piece.
+const HOOKS = [
+  'a small scene from daily life abroad',
+  'a line someone says (a wife, a boss, a friend, a mother on the phone)',
+  'a surprising detail or number from the input',
+  'a confession',
+  'the result first, then how it happened',
+  'a question the reader has asked themselves',
+  'the problem itself, with no build-up',
+  'a funny everyday observation',
+];
+
+function postHint(kind) {
+  const what = kind === 'thread' ? 'main post' : 'post';
+  const hook = pick(HOOKS);
+  const numbers = hook.includes('number') || hook.includes('result') ? '' : ' Don\'t open with the money or the numbers; save them for later.';
+  return `\n\nFOR THIS ONE ONLY: the first line of the ${what} MUST be ${hook}.${numbers} Don't reuse the input's first sentence as the opening, and if there is a character, give them a name you haven't used before (not Rashed, Rahim or Karim).`;
+}
+
+module.exports = { openingHint, postHint };
