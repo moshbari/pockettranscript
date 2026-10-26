@@ -160,7 +160,8 @@ h1{font-size:clamp(36px,6vw,58px);line-height:1.04;letter-spacing:-.035em;margin
 .center h2{margin-top:12px}
 
 /* videos */
-.vids{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:700px;margin:30px auto 0}
+.vids{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1000px;margin:30px auto 0}
+@media (max-width:900px){ .vids{grid-template-columns:1fr 1fr} .vids figure:last-child{grid-column:1/-1} }
 .vids figure{margin:0}
 .vids figcaption{font-weight:700;margin-bottom:10px;text-align:center}
 .vframe{position:relative;aspect-ratio:9/16;max-width:320px;margin:0 auto;border-radius:20px;overflow:hidden;background:#000;box-shadow:var(--shadow)}
@@ -477,9 +478,13 @@ footer a{text-decoration:none;font-weight:600}
     <div class="center">
       <span class="eyebrow g">Watch me do it</span>
       <h2>See it on a real phone</h2>
-      <p>Two short videos: a thread post from a YouTube video, and free traffic from a comment on someone else's post.</p>
+      <p>Three short videos, one for each way to get leads: a faceless text post, a thread post, and a comment on someone else's post.</p>
     </div>
     <div class="vids">
+      <figure>
+        <figcaption>Turn any video into a text post</figcaption>
+        <div class="vframe"><iframe src="https://www.youtube-nocookie.com/embed/4vp0607tbkk?rel=0&playsinline=1" title="Turn any video into a faceless text post" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
+      </figure>
       <figure>
         <figcaption>Turn any video into a thread post</figcaption>
         <div class="vframe"><iframe src="https://www.youtube-nocookie.com/embed/hpuGIjE-tjk?rel=0&playsinline=1" title="Turn any video into a thread post" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
