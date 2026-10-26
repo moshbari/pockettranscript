@@ -3,237 +3,548 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0b0f14">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PocketTranscript">
-<title>PocketTranscript</title>
-<link rel="manifest" href="/manifest.webmanifest">
-<link rel="apple-touch-icon" href="/icons/icon-192.png">
-<link rel="stylesheet" href="/styles.css">
+<script>
+  // Opened as the installed web app, or something was shared into it: that's the app, not this page.
+  (function () {
+    var q = location.search;
+    var standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone;
+    if (standalone || /[?&](text|url|title|job|code|pack)=/.test(q)) location.replace('/app' + q + location.hash);
+  })();
+</script>
+<title>Get Transcript — Any video or post, into your next post or comment | iPhone &amp; Android</title>
+<meta name="description" content="Tap Share on any video or post. Get Transcript gets every word, then ChatGPT turns it into your Facebook post, thread or a helpful comment. Free for iPhone and Android.">
+<meta name="theme-color" content="#0ea5e9">
+<link rel="canonical" href="https://pocket.99dfy.com/">
+<link rel="icon" href="/img/sales/icon.jpg">
+<link rel="apple-touch-icon" href="/img/sales/icon.jpg">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Get Transcript by Mosh Bari">
+<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://pocket.99dfy.com/">
+<meta property="og:title" content="Get Transcript — Any video or post, into your next post or comment">
+<meta property="og:description" content="Tap Share, get every word, and let ChatGPT write the post, the thread or the comment. Free for iPhone and Android.">
+<meta property="og:image" content="https://pocket.99dfy.com/img/sales/og-card.jpg">
+<meta property="og:image:secure_url" content="https://pocket.99dfy.com/img/sales/og-card.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Get Transcript: tap Share on any video or post, get every word, and ChatGPT writes your post, thread or comment.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Get Transcript — Any video or post, into your next post or comment">
+<meta name="twitter:description" content="Tap Share, get every word, and let ChatGPT write the post, the thread or the comment. Free for iPhone and Android.">
+<meta name="twitter:image" content="https://pocket.99dfy.com/img/sales/og-card.jpg">
+<meta name="twitter:image:alt" content="Get Transcript: any video or post into your next post, thread or comment.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --a1:#0ea5e9; --a2:#6366f1;
+  --grad:linear-gradient(120deg,var(--a1),var(--a2));
+  --bg:#f7fafd; --bg2:#eef4fa; --card:#ffffff; --ink:#0f172a; --muted:#5b6678; --line:#e3eaf2;
+  --keep:#22a06b; --but:#fff4f2; --butline:#ffd2c9; --butedge:#f0643c;
+  --shadow:0 10px 30px rgba(15,40,80,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#0b0f14; --bg2:#10161d; --card:#151c25; --ink:#eef3f8; --muted:#9aa7b6; --line:#232d39; --but:#2a1813; --butline:#5a2a1e; --shadow:0 10px 30px rgba(0,0,0,.35); }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;overflow-x:hidden}
+a{color:inherit}
+img{max-width:100%}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+.g{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.eyebrow{display:inline-block;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+
+header.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 0}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;text-decoration:none}
+.brand img{width:36px;height:36px;border-radius:9px}
+.brand small{font-weight:500;color:var(--muted);font-size:13px}
+.navs{display:flex;align-items:center;gap:8px}
+.navlink{font-weight:700;font-size:14px;text-decoration:none;padding:9px 16px;border-radius:999px;background:var(--grad);color:#fff;white-space:nowrap}
+.navghost{font-weight:600;font-size:14px;text-decoration:none;padding:9px 12px;color:var(--muted);white-space:nowrap}
+.navghost:hover{color:var(--ink)}
+
+/* buttons */
+.dl{display:flex;flex-wrap:wrap;gap:12px}
+.btn{display:inline-flex;align-items:center;gap:12px;padding:12px 20px;border-radius:16px;text-decoration:none;font-weight:700;min-height:60px;transition:transform .15s ease}
+.btn:hover{transform:translateY(-2px)}
+.btn svg{width:28px;height:28px;flex:none}
+.btn .t{display:flex;flex-direction:column;line-height:1.15}
+.btn .t small{font-weight:500;font-size:12px;opacity:.85}
+.btn .t b{font-size:17px}
+.btn.ios{background:#111;color:#fff}
+.btn.android{background:var(--grad);color:#fff;box-shadow:0 10px 24px rgba(14,165,233,.3)}
+@media (prefers-color-scheme: dark){ .btn.ios{background:#fff;color:#111} }
+.btn.mine{outline:3px solid rgba(14,165,233,.4);outline-offset:3px}
+
+/* phone frame */
+.phone{border-radius:34px;overflow:hidden;border:6px solid #111;background:#111;box-shadow:0 26px 50px rgba(15,40,80,.2);max-width:280px;margin:0 auto}
+.phone img{display:block;width:100%}
+.phones{display:flex;gap:18px;justify-content:center;align-items:flex-start}
+.phones .phone{flex:1;max-width:250px}
+.phones > div{flex:1;max-width:250px}
+.cap{text-align:center;font-size:14px;color:var(--muted);font-weight:600;margin-top:10px}
+
+/* hero */
+.hero{display:grid;grid-template-columns:1.15fr .85fr;gap:44px;align-items:center;padding:30px 0 50px}
+h1{font-size:clamp(36px,6vw,58px);line-height:1.04;letter-spacing:-.035em;margin:12px 0 18px;font-weight:800}
+.lead{font-size:clamp(18px,2.2vw,21px);color:var(--muted);margin:0 0 26px}
+.lead b{color:var(--ink)}
+.note{font-size:14px;color:var(--muted);margin-top:14px}
+.ver{font-size:13px;color:var(--muted);margin-top:8px}
+
+/* chapter map */
+.map{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:var(--shadow);margin-bottom:10px}
+.map h2{font-size:18px;margin:0 0 4px}
+.map p{margin:0 0 14px;color:var(--muted);font-size:15px}
+.map ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.map a{display:flex;align-items:center;gap:10px;text-decoration:none;padding:10px 12px;border-radius:12px;background:var(--bg2);font-weight:600;font-size:15px}
+.map a:hover{outline:1.5px solid var(--a1)}
+.map .n{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:13px;font-weight:800;background:var(--grad);flex:none}
+
+/* chapters */
+.ch{padding:70px 0;border-top:1px solid var(--line)}
+.ch:nth-of-type(even){background:var(--bg2)}
+.ch-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
+.ch.flip .ch-text{order:2}
+.ch-tag{display:inline-flex;align-items:center;gap:10px;font-weight:700;font-size:14px;color:var(--a1)}
+.ch-tag .n{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;background:var(--grad)}
+.ch h2{font-size:clamp(28px,4vw,40px);letter-spacing:-.025em;line-height:1.1;margin:12px 0 18px}
+.ch p{margin:0 0 16px}
+.but{background:var(--but);border:1px solid var(--butline);border-left:4px solid var(--butedge);border-radius:14px;padding:14px 18px;margin:0 0 16px}
+.so{border-left:4px solid var(--keep);padding:2px 0 2px 18px;margin:0 0 18px}
+.how{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 20px;box-shadow:var(--shadow);margin:6px 0 20px}
+.how h3{margin:0 0 8px;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.how ol{margin:0;padding-left:22px}
+.how li{margin:6px 0}
+.tag{display:inline-block;font-weight:700;font-size:14px;padding:1px 9px;border-radius:7px;background:rgba(14,165,233,.12);color:#0284c7;white-space:nowrap}
+@media (prefers-color-scheme: dark){ .tag{color:#7dd3fc} }
+.next{display:flex;align-items:center;gap:12px;margin-top:8px;padding-top:18px;border-top:1px dashed var(--line);font-style:italic;color:var(--muted);text-decoration:none}
+.next:hover{color:var(--ink)}
+.next .arr{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--grad);color:#fff;font-style:normal;font-weight:800}
+
+/* sheet crop + pages */
+.sheet{max-width:330px;margin:0 auto;border-radius:22px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow)}
+.sheet img{display:block;width:100%}
+.pages{display:flex;gap:12px;justify-content:center;align-items:flex-start}
+.pages figure{margin:0;flex:1;max-width:200px}
+.pages img{display:block;width:100%;border-radius:14px;border:1px solid var(--line);box-shadow:var(--shadow)}
+.pages figcaption{text-align:center;font-size:13px;color:var(--muted);font-weight:600;margin-top:8px}
+
+/* steps strip */
+.flow3{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:30px}
+.flow3 figure{margin:0}
+.flow3 .phone{max-width:none}
+.flow3 figcaption{text-align:center;font-size:14px;font-weight:600;color:var(--muted);margin-top:10px}
+.flow3 figcaption b{display:block;color:var(--ink)}
+
+/* numbers strip */
+.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:22px 0}
+.num{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;text-align:center}
+.num b{display:block;font-size:clamp(18px,2.2vw,24px);letter-spacing:-.02em}
+.num span{font-size:14px;color:var(--muted)}
+
+.center{text-align:center;max-width:720px;margin:0 auto}
+.center h2{margin-top:12px}
+
+/* videos */
+.vids{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:700px;margin:30px auto 0}
+.vids figure{margin:0}
+.vids figcaption{font-weight:700;margin-bottom:10px;text-align:center}
+.vframe{position:relative;aspect-ratio:9/16;max-width:320px;margin:0 auto;border-radius:20px;overflow:hidden;background:#000;box-shadow:var(--shadow)}
+.vframe iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+
+/* faq + install */
+.cards2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px 24px;box-shadow:var(--shadow)}
+.card h3{margin:0 0 8px;font-size:19px}
+.card ol{margin:0;padding-left:20px;color:var(--muted)}
+.card li{margin:6px 0}
+.card li b{color:var(--ink)}
+.faq details{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 20px;margin-bottom:10px}
+.faq summary{font-weight:700;cursor:pointer}
+.faq p{margin:10px 0 0;color:var(--muted)}
+
+.cta{text-align:center;background:var(--grad);color:#fff;border-radius:28px;padding:50px 24px;margin:30px 0 10px}
+.cta h2{font-size:clamp(28px,4vw,42px);margin:0 0 10px;letter-spacing:-.02em;line-height:1.1}
+.cta p{margin:0 0 24px;opacity:.92;font-size:18px}
+.cta .dl{justify-content:center}
+.cta .btn.android{background:#fff;color:#4f46e5;box-shadow:none}
+.cta .btn.ios{background:#111;color:#fff}
+
+/* back to top */
+.totop{position:fixed;right:max(18px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom));z-index:50;width:58px;height:58px;border:0;padding:0;border-radius:50%;cursor:pointer;background:none;
+  opacity:0;transform:translateY(16px) scale(.9);pointer-events:none;transition:opacity .25s ease,transform .25s ease}
+.totop.show{opacity:1;transform:none;pointer-events:auto}
+.totop .disc{position:absolute;inset:5px;border-radius:50%;background:var(--grad);box-shadow:0 10px 24px rgba(99,102,241,.35),0 2px 6px rgba(14,165,233,.3);display:grid;place-items:center;transition:transform .15s ease}
+.totop:hover .disc{transform:translateY(-2px)}
+.totop:active .disc{transform:scale(.94)}
+.totop .disc svg{width:22px;height:22px}
+.totop .ring{position:absolute;inset:0;transform:rotate(-90deg)}
+.totop .ring circle{fill:none;stroke-width:3}
+.totop .ring .bg{stroke:var(--line)}
+.totop .ring .fg{stroke:var(--a1);stroke-linecap:round;transition:stroke-dashoffset .1s linear}
+footer{padding:34px 0 50px;color:var(--muted);font-size:14px;text-align:center}
+footer nav{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;margin-bottom:10px}
+footer a{text-decoration:none;font-weight:600}
+
+@media (max-width:900px){
+  .hero,.ch-grid{grid-template-columns:1fr;gap:30px}
+  .ch.flip .ch-text{order:0}
+  /* phones: text, then the picture, then the teaser for the next chapter */
+  .ch-grid{display:flex;flex-direction:column;gap:0}
+  .ch-text{display:contents}
+  .ch-grid > :not(.ch-text){order:5;margin:6px 0 26px}
+  .ch-text .next{order:9}
+  .hero{text-align:center;padding-top:14px}
+  .hero .dl{justify-content:center}
+  .map ol{grid-template-columns:1fr 1fr}
+  .flow3{grid-template-columns:1fr 1fr}
+  .flow3 .wide{grid-column:1/-1}
+}
+@media (max-width:600px){
+  body{font-size:16.5px}
+  .wrap{padding:0 16px}
+  .btn{width:100%;justify-content:center}
+  .map ol,.cards2,.vids{grid-template-columns:1fr}
+  .ch{padding:50px 0}
+  .phones{gap:10px}
+  .phone{border-width:5px;border-radius:26px}
+  .nums{gap:8px}
+  .num{padding:12px 6px}
+  .num span{font-size:12.5px}
+  .flow3{gap:10px}
+  .navghost{display:none}
+  .brand small{display:none}
+}
+</style>
 </head>
 <body>
-
-<header class="bar">
-  <div class="brand">
-    <span class="logo">▶</span>
-    <span>PocketTranscript</span>
-  </div>
-  <div class="bar-right">
-    <a class="helplink" href="/saved" title="Saved for later">📌 Saved</a>
-    <a class="helplink" href="/install" title="Setup guide">Setup</a>
-    <button id="statusPill" class="pill pill-unknown" type="button">
-      <span class="dot"></span><span id="statusText">Checking…</span>
-    </button>
-  </div>
-</header>
-
-<!-- ── Screen 1: pair this phone with the desktop ─────────────────────── -->
-<main id="pairScreen" class="screen hidden">
-  <section class="card picker">
-    <div class="picker-kicker">Free · 1 minute to set up</div>
-    <h2 class="picker-title">Get the Share button on your phone</h2>
-    <p class="picker-sub">Tap <b>Share</b> on any video or voice note, get every word, and send it to ChatGPT or Claude.</p>
-    <div class="picker-grid">
-      <a class="pick" href="/share" data-os="ios">
-        <span class="pick-yours">Your phone</span>
-        <svg class="pick-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
-        <span class="pick-name">iPhone</span>
-        <span class="pick-ver" data-appver-line hidden>App version <b data-appver="ios"></b></span>
-        <span class="pick-go">Set up <span aria-hidden="true">→</span></span>
-      </a>
-      <a class="pick" href="/android/" data-os="android">
-        <span class="pick-yours">Your phone</span>
-        <svg class="pick-icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M6.2 4.6 8 7.7M17.8 4.6 16 7.7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/>
-          <path d="M2.5 17.5a9.5 9.5 0 0 1 19 0z"/>
-          <circle cx="7.6" cy="13.6" r="1.15" fill="var(--card)"/><circle cx="16.4" cy="13.6" r="1.15" fill="var(--card)"/>
-        </svg>
-        <span class="pick-name">Android</span>
-        <span class="pick-ver" data-appver-line hidden>App version <b data-appver="android"></b></span>
-        <span class="pick-go">Set up <span aria-hidden="true">→</span></span>
-      </a>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="/"><img src="/img/sales/icon.jpg" alt="">Get Transcript <small>by Mosh Bari</small></a>
+    <div class="navs">
+      <a class="navghost" href="/app">Web app</a>
+      <a class="navlink" href="#download">Get it free</a>
     </div>
-    <div class="howto">
-      <h3 class="howto-title">Watch how it works</h3>
-      <figure class="howto-vid">
-        <figcaption><span class="howto-num">1</span> Install the Share button</figcaption>
-        <div class="howto-frame tall">
-          <iframe src="https://www.youtube-nocookie.com/embed/4vp0607tbkk?rel=0&playsinline=1" title="How to install the Get Transcript Share button"
-                  loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-        </div>
-      </figure>
-      <figure class="howto-vid">
-        <figcaption><span class="howto-num">2</span> Turn any video into a thread post</figcaption>
-        <div class="howto-frame tall">
-          <iframe src="https://www.youtube-nocookie.com/embed/hpuGIjE-tjk?rel=0&playsinline=1" title="How to make thread content from a video"
-                  loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-        </div>
-      </figure>
-      <figure class="howto-vid">
-        <figcaption><span class="howto-num">3</span> Get free traffic with AI comments</figcaption>
-        <div class="howto-frame tall">
-          <iframe src="https://www.youtube-nocookie.com/embed/LZmlkRD1IRg?rel=0&playsinline=1" title="Get free traffic with AI comments"
-                  loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-        </div>
-      </figure>
-    </div>
-  </section>
+  </header>
 
-  <div class="card intro">
-    <h1>Connect your computer</h1>
-    <p>Your Mac does the actual transcript grabbing. Pair this phone with it once — you'll never do this again on this phone.</p>
-    <ol class="steps">
-      <li>On your Mac, click the <b>YT Transcript Scraper</b> extension.</li>
-      <li>Open the <b>📱 Phone</b> tab and tap <b>Show pairing code</b>.</li>
-      <li>Type the 6 digits below.</li>
+  <div class="hero">
+    <div>
+      <h1>You found the perfect video. <span class="g">Now turn it into your next post.</span></h1>
+      <p class="lead">A great video, a post everyone is talking about, a voice note full of ideas: all of it can become your next Facebook post, a thread, or a comment that brings people back to your profile. The hard part is getting the words out and into ChatGPT. <b>Get Transcript does that from the Share button</b>, in seconds, on your phone.</p>
+      <div class="dl" id="download">
+        <a class="btn ios" id="btn-ios" href="https://apps.apple.com/app/get-transcript/id6820350358">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.37 12.6c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.47.83-.72 0-1.82-.81-2.99-.79-1.54.02-2.96.9-3.75 2.27-1.6 2.78-.41 6.89 1.15 9.14.76 1.1 1.67 2.34 2.86 2.3 1.15-.05 1.58-.74 2.97-.74 1.38 0 1.78.74 2.99.72 1.24-.02 2.02-1.12 2.77-2.23.87-1.28 1.23-2.52 1.25-2.58-.03-.01-2.4-.92-2.42-3.66zM14.1 5.86c.63-.77 1.06-1.83.94-2.89-.91.04-2.02.61-2.67 1.37-.58.67-1.1 1.76-.96 2.8 1.02.08 2.06-.52 2.69-1.28z"/></svg>
+          <span class="t"><small>Download on the</small><b>App Store</b></span>
+        </a>
+        <a class="btn android" id="btn-android" href="https://github.com/moshbari/gettranscript-downloads/releases/latest/download/GetTranscript.apk">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.6 9.48l1.84-3.18a.38.38 0 00-.66-.38l-1.86 3.22a11.4 11.4 0 00-9.84 0L5.22 5.92a.38.38 0 10-.66.38L6.4 9.48A10.8 10.8 0 001 18h22a10.8 10.8 0 00-5.4-8.52zM7 15.25a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5zm10 0a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5z"/></svg>
+          <span class="t"><small>Download for</small><b>Android</b></span>
+        </a>
+      </div>
+      <p class="ver" data-appver-line hidden>Newest: iPhone <b data-appver="ios"></b> · Android <b data-appver="android"></b></p>
+      <p class="note">This page is also the tutorial. Read it once and you'll know the whole app. <a href="#ch1">Start the story ↓</a></p>
+    </div>
+    <div>
+      <div class="phone"><img src="/img/sales/post-done.jpg" alt="Get Transcript has read a post: 159 words, with Comment on this post at the top of the list"></div>
+      <p class="cap">Every word of the post, and the comment prompt ready</p>
+    </div>
+  </div>
+
+  <nav class="map" aria-label="Chapters">
+    <h2>How it works, in 6 short chapters</h2>
+    <p>Each one solves the problem the chapter before it leaves you with. Read them in order.</p>
+    <ol>
+      <li><a href="#ch1"><span class="n">1</span>Get the words</a></li>
+      <li><a href="#ch2"><span class="n">2</span>Hand them to ChatGPT</a></li>
+      <li><a href="#ch3"><span class="n">3</span>A thread from any video</a></li>
+      <li><a href="#ch4"><span class="n">4</span>Posts with no video</a></li>
+      <li><a href="#ch5"><span class="n">5</span>A comment that brings people back</a></li>
+      <li><a href="#ch6"><span class="n">6</span>Save it for later</a></li>
     </ol>
-    <a class="btn btn-ghost btn-lg guide-link" href="/install">📖 Show me, with pictures</a>
-  </div>
+  </nav>
+</div>
 
-
-
-  <div class="card">
-    <label for="codeInput" class="label">Pairing code</label>
-    <input id="codeInput" class="code-input" inputmode="numeric" pattern="[0-9]*"
-           maxlength="6" autocomplete="one-time-code" placeholder="000000">
-    <button id="pairBtn" class="btn btn-primary btn-lg">Connect</button>
-    <p id="pairError" class="error hidden"></p>
-  </div>
-</main>
-
-<!-- ── Screen 2: the everyday screen ──────────────────────────────────── -->
-<main id="mainScreen" class="screen hidden">
-
-  <div id="asleepBanner" class="banner hidden">
-    <div class="banner-title">😴 Your computer is asleep</div>
-    <div class="banner-body">
-      PocketTranscript needs Chrome running on your Mac. Wake it up and this turns green on its own —
-      anything you send meanwhile just waits in the queue.
-      <a class="banner-link" href="/install">Setup guide →</a>
+<!-- 1 GET THE WORDS -->
+<section class="ch" id="ch1">
+  <div class="wrap ch-grid">
+    <div class="ch-text">
+      <span class="ch-tag"><span class="n">1</span>Get the words</span>
+      <h2>Every good post starts with something you watched.</h2>
+      <p>You're scrolling YouTube and a video stops you. A clear idea, a great story, a point your audience needs to hear. You know it would make a brilliant post, in your own words, for your own people.</p>
+      <div class="but">But a video is sound, not words. To write about it you'd have to watch it again with a notepad, pause every ten seconds, and type. On a phone, nobody does that. The idea is gone by tomorrow.</div>
+      <div class="so">So skip the typing. Tap <b>Share</b> on the video, choose <span class="tag">Get Transcript</span>, and a few seconds later every word is there, with the title and the link. It works for YouTube, TikTok, Instagram, Facebook and X, and for your own voice notes and screen recordings too.</div>
+      <div class="how">
+        <h3>Try it now</h3>
+        <ol>
+          <li>Open a video in YouTube and tap <b>Share</b>.</li>
+          <li>Swipe the row of apps to the right, tap <b>More</b>, and choose <span class="tag">Get Transcript</span>.</li>
+          <li>The first time, tap <b>Edit</b> and the green <b>+</b> next to Get Transcript, so it sits at the front of the row from now on.</li>
+          <li>Wait a few seconds. You'll see how many words it found, with <b>Read it all</b> and <b>Copy it</b>.</li>
+        </ol>
+      </div>
+      <a class="next" href="#ch2"><span class="arr">↓</span>You've got the words. A wall of words isn't a post, though. That's ChatGPT's job, if you know what to ask it…</a>
+    </div>
+    <div class="phones">
+      <div><div class="sheet"><img src="/img/sales/share-sheet.jpg" alt="iPhone Share menu with Get Transcript in the row of apps" loading="lazy"></div><p class="cap">Share → Get Transcript</p></div>
+      <div><div class="phone"><img src="/img/sales/video-done.jpg" alt="Get Transcript result: 197 words from a video, with the list of prompts" loading="lazy"></div><p class="cap">Every word, seconds later</p></div>
     </div>
   </div>
+</section>
 
-  <div class="card welcome">
-    <h1 class="welcome-title">Get the words from any YouTube video</h1>
-    <p class="welcome-body">Paste a YouTube link below and tap the button. In a few seconds you get <b>every word said in the video</b>,
-      ready to read, copy, or give to ChatGPT or Claude. No typing, no watching the whole thing.</p>
-  </div>
-
-  <div class="card">
-    <label for="urlInput" class="label">1. Paste a YouTube link</label>
-    <div class="input-row">
-      <input id="urlInput" class="text-input" type="url" inputmode="url"
-             autocomplete="off" autocapitalize="off" spellcheck="false"
-             placeholder="https://youtu.be/…">
-      <button id="pasteBtn" class="btn btn-ghost" title="Paste from clipboard">Paste</button>
+<!-- 2 CHATGPT -->
+<section class="ch flip" id="ch2">
+  <div class="wrap ch-grid">
+    <div class="ch-text">
+      <span class="ch-tag"><span class="n">2</span>Hand them to ChatGPT</span>
+      <h2>The words are only as good as what you ask for.</h2>
+      <p>Under the words sits a list of ready-made instructions: a Facebook post in Bangla and English, a post with an audience check, a story with a character and a villain, a thread, a comment, a summary, the key points. Pick one, and the instruction plus the whole transcript go to ChatGPT together.</p>
+      <div class="but">Copying, switching apps, pasting the transcript, then typing a good prompt from memory: that's where most people give up, or end up with a bland "here's a summary" post that sounds like everyone else's.</div>
+      <div class="so">One tap does all of it. Tap the instruction you want: everything is copied and ChatGPT opens. Tap the message box, <b>Paste</b>, and send. The post prompts even make ChatGPT score its own work out of 10, and rewrite it until it's happy with it.</div>
+      <div class="how">
+        <h3>Your first post</h3>
+        <ol>
+          <li>Under <b>Ask</b>, keep <b>ChatGPT</b> picked (or switch to <b>Claude</b>).</li>
+          <li>Tap <span class="tag">FB post (Bangla, 99)</span>, or any other instruction.</li>
+          <li>In ChatGPT, tap the message box, <b>Paste</b>, then the send arrow.</li>
+          <li>Read what it wrote. AI can be wrong, so you're the editor. Like it? Copy it and post.</li>
+        </ol>
+      </div>
+      <p>Have instructions of your own that work for you? Save them in <span class="tag">My prompts</span> with a name. They show at the top of the list after every transcript, on your phone and on this website.</p>
+      <a class="next" href="#ch3"><span class="arr">↓</span>One post is easy. But some videos have too much in them for one post…</a>
     </div>
-    <button id="goBtn" class="btn btn-primary btn-lg">2. Get every word</button>
-    <p class="hint">Copy the link in the YouTube app: tap <b>Share → Copy link</b>.</p>
-    <p id="mainError" class="error hidden"></p>
-  </div>
-
-  <section class="card picker">
-    <div class="picker-kicker">Free · 1 minute to set up</div>
-    <h2 class="picker-title">Get the Share button on your phone</h2>
-    <p class="picker-sub">Tap <b>Share</b> on any video or voice note, get every word, and send it to ChatGPT or Claude.</p>
-    <div class="picker-grid">
-      <a class="pick" href="/share" data-os="ios">
-        <span class="pick-yours">Your phone</span>
-        <svg class="pick-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
-        <span class="pick-name">iPhone</span>
-        <span class="pick-ver" data-appver-line hidden>App version <b data-appver="ios"></b></span>
-        <span class="pick-go">Set up <span aria-hidden="true">→</span></span>
-      </a>
-      <a class="pick" href="/android/" data-os="android">
-        <span class="pick-yours">Your phone</span>
-        <svg class="pick-icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M6.2 4.6 8 7.7M17.8 4.6 16 7.7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/>
-          <path d="M2.5 17.5a9.5 9.5 0 0 1 19 0z"/>
-          <circle cx="7.6" cy="13.6" r="1.15" fill="var(--card)"/><circle cx="16.4" cy="13.6" r="1.15" fill="var(--card)"/>
-        </svg>
-        <span class="pick-name">Android</span>
-        <span class="pick-ver" data-appver-line hidden>App version <b data-appver="android"></b></span>
-        <span class="pick-go">Set up <span aria-hidden="true">→</span></span>
-      </a>
+    <div class="phones">
+      <div><div class="phone"><img src="/img/sales/video-done.jpg" alt="The list of instructions under a transcript" loading="lazy"></div><p class="cap">Tap one, Paste, Send</p></div>
+      <div><div class="phone"><img src="/img/sales/prompts.jpg" alt="My prompts screen with the built-in instructions" loading="lazy"></div><p class="cap">Add your own</p></div>
     </div>
-    <div class="howto">
-      <h3 class="howto-title">Watch how it works</h3>
-      <figure class="howto-vid">
-        <figcaption><span class="howto-num">1</span> Install the Share button</figcaption>
-        <div class="howto-frame tall">
-          <iframe src="https://www.youtube-nocookie.com/embed/4vp0607tbkk?rel=0&playsinline=1" title="How to install the Get Transcript Share button"
-                  loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-        </div>
+  </div>
+</section>
+
+<!-- 3 THREAD -->
+<section class="ch" id="ch3">
+  <div class="wrap">
+    <div class="center">
+      <span class="ch-tag"><span class="n">3</span>A thread from any video</span>
+      <h2>One video, a whole week of content.</h2>
+      <p>A thread keeps people reading: one strong opening post, then a comment after comment that each adds one more idea. It's one of the best ways to stay in front of people on Facebook and X.</p>
+      <div class="but" style="text-align:left">Writing one by hand means splitting the idea into pieces, keeping each piece short, and making them flow. It's an hour of work for one post.</div>
+      <div class="so" style="text-align:left">Choose <span class="tag">Thread post (X + Facebook)</span> instead. ChatGPT writes an X version first, then a Facebook version: the main post plus every comment, each in its own box with a copy button. The last comment is your call to action.</div>
+    </div>
+    <div class="flow3">
+      <figure><div class="sheet"><img src="/img/sales/share-sheet.jpg" alt="Share menu with Get Transcript" loading="lazy"></div><figcaption><b>1. Share the video</b>to Get Transcript</figcaption></figure>
+      <figure><div class="phone"><img src="/img/sales/video-done.jpg" alt="Thread post in the list of instructions" loading="lazy"></div><figcaption><b>2. Tap Thread post</b>then Paste in ChatGPT</figcaption></figure>
+      <figure class="wide"><div class="how" style="margin:0;height:100%"><h3>3. Post the main post</h3><ol><li>Make an image with your image prompt and save it.</li><li>Copy the main post.</li><li>In Facebook: add the image, paste, post.</li></ol></div></figure>
+      <figure class="wide"><div class="how" style="margin:0;height:100%"><h3>4. Add the comments</h3><ol><li>Copy comment 1, paste, send.</li><li>Then 2, 3, 4… in order.</li><li>The last one is your call to action.</li></ol></div></figure>
+    </div>
+    <div class="center"><a class="next" href="#ch4" style="justify-content:center;border:0"><span class="arr">↓</span>Videos are easy now. But the posts everyone's talking about are often just words, with no video to share…</a></div>
+  </div>
+</section>
+
+<!-- 4 TEXT POSTS -->
+<section class="ch flip" id="ch4">
+  <div class="wrap ch-grid">
+    <div class="ch-text">
+      <span class="ch-tag"><span class="n">4</span>Posts with no video</span>
+      <h2>A post of words has no transcript to get.</h2>
+      <p>Some of the best things on Facebook, LinkedIn and Threads are written posts, and the gold is often in the comments under them. Share one of those to Get Transcript, and it knows there's nothing to transcribe.</p>
+      <div class="but">The usual fix is screenshots: one, scroll, another, scroll, another. Then you pick them out of your gallery in the right order, attach them to ChatGPT one by one, and hope it can read them all.</div>
+      <div class="so">Get Transcript records it instead. It offers <span class="tag">Record this post</span>. You scroll through the post and the comments you want, and stop. It joins the recording into one long picture, cuts it into screen-sized pages, and reads every word on them. The pages also go into your Photos.</div>
+      <div class="how">
+        <h3>Record a post</h3>
+        <ol>
+          <li>On the post, tap <b>Share</b> → <span class="tag">Get Transcript</span> → <span class="tag">Record this post</span>.</li>
+          <li>iPhone: tap <b>Start Broadcast</b>, then <b>◀</b> at the top left to go back to the post. Android: tap <b>Start</b>.</li>
+          <li>Scroll down slowly through the post and the comments you want.</li>
+          <li>iPhone: tap the red time at the top, then <b>Stop</b>. Android: pull down the notifications and tap <b>Stop</b>.</li>
+          <li>Tap the <b>"Post recorded"</b> note. The post is read and ready.</li>
+        </ol>
+      </div>
+      <p>No Share button handy? On the app's home screen, tap <span class="tag">Capture a text post: record and scroll</span>, start recording, and open the post yourself.</p>
+      <a class="next" href="#ch5"><span class="arr">↓</span>Now you have every word of the post and its comments. Here's where it gets interesting…</a>
+    </div>
+    <div>
+      <div class="phones">
+        <div><div class="phone"><img src="/img/sales/record.jpg" alt="Text post screen with the Record this post button" loading="lazy"></div><p class="cap">Record this post</p></div>
+        <div><div class="phone"><img src="/img/sales/making.jpg" alt="Making the pages, with a progress bar" loading="lazy"></div><p class="cap">Making the pages</p></div>
+      </div>
+      <div class="pages" style="margin-top:22px">
+        <figure><img src="/img/sales/page1.jpg" alt="Page 1: the post" loading="lazy"><figcaption>Page 1</figcaption></figure>
+        <figure><img src="/img/sales/page2.jpg" alt="Page 2: the comments" loading="lazy"><figcaption>Page 2</figcaption></figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 COMMENT -->
+<section class="ch" id="ch5">
+  <div class="wrap ch-grid">
+    <div class="ch-text">
+      <span class="ch-tag"><span class="n">5</span>A comment that brings people back</span>
+      <h2>The cheapest traffic is under other people's posts.</h2>
+      <p>Big creators pull thousands of people into their comment sections every day. Those people are already interested, and already reading. Show up there with a comment that adds something real, and some of them click on you. You're borrowing traffic.</p>
+      <div class="but">Borrow it like a good guest, though. A "DM me", a link, a pitch, and the creator bans you. And a genuinely helpful comment takes thought: read the whole post, read what others said, find something worth adding. On a phone, on the go, that's hard to do well, three times a day.</div>
+      <div class="so">After a post is read, <span class="tag">Comment on this post</span> sits at the top of the list. Tap it, Paste in ChatGPT, send. It has the whole post and the comments as text, so you don't attach a single screenshot. It writes a humble, supportive comment that adds value, checks its own quality, and puts the post's link on the first line, so you can always find the post again.</div>
+      <div class="how">
+        <h3>From post to comment</h3>
+        <ol>
+          <li>Record the post (chapter 4), then tap <b>"Post recorded"</b>.</li>
+          <li>Tap <span class="tag">Comment on this post</span>.</li>
+          <li>In ChatGPT: <b>Paste</b>, send. Read the comment it writes.</li>
+          <li>Copy it, go back to the post (or tap the link), paste and post.</li>
+        </ol>
+      </div>
+      <p>Want to see the whole post as text first? Tap <span class="tag">Read it all</span>. You can select and copy any part of it.</p>
+      <a class="next" href="#ch6"><span class="arr">↓</span>Of course, you won't always have time to comment the moment you see a post…</a>
+    </div>
+    <div class="phones">
+      <div><div class="phone"><img src="/img/sales/post-done.jpg" alt="Post read: Comment on this post at the top of the list" loading="lazy"></div><p class="cap">Comment on this post, first</p></div>
+      <div><div class="phone"><img src="/img/sales/read-all.jpg" alt="The whole post as text" loading="lazy"></div><p class="cap">The whole post, as text</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 SAVE -->
+<section class="ch flip" id="ch6">
+  <div class="wrap ch-grid">
+    <div class="ch-text">
+      <span class="ch-tag"><span class="n">6</span>Save it for later</span>
+      <h2>The best ideas show up when you're busy.</h2>
+      <p>You're scrolling in a queue, between calls, half-watching. You see a video or a post you'd love to use. Right now you can't stop and write.</p>
+      <div class="but">Screenshots and "I'll remember it" don't work. By tonight it's buried under a hundred other things, and Facebook won't show you that post again.</div>
+      <div class="so">Tap <b>Share</b> → <span class="tag">Save for later</span>. One tap, a quick "Saved", and you're back to scrolling. When you have time, open the <span class="tag">Saved</span> tab: everything you kept is waiting. Tap one to get its words and write your post. Mark it done when you've used it.</div>
+      <div class="how">
+        <h3>Keep it in one tap</h3>
+        <ol>
+          <li>Tap <b>Share</b> on a post or video.</li>
+          <li>Choose <span class="tag">Save for later</span> in the list under the app icons (tap <b>View More</b> the first time).</li>
+          <li>Later: open Get Transcript → <b>Saved</b>.</li>
+        </ol>
+      </div>
+      <a class="next" href="#get"><span class="arr">↓</span>That's the whole app. Here's how to get it on your phone…</a>
+    </div>
+    <div class="phones">
+      <div><div class="phone"><img src="/img/sales/saved.jpg" alt="Saved tab" loading="lazy"></div><p class="cap">Your Saved list</p></div>
+      <div><div class="phone"><img src="/img/sales/home.jpg" alt="Get Transcript home screen" loading="lazy"></div><p class="cap">Everything in one place</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="ch" id="watch">
+  <div class="wrap">
+    <div class="center">
+      <span class="eyebrow g">Watch me do it</span>
+      <h2>See it on a real phone</h2>
+      <p>Two short videos: a thread post from a YouTube video, and free traffic from a comment on someone else's post.</p>
+    </div>
+    <div class="vids">
+      <figure>
+        <figcaption>Turn any video into a thread post</figcaption>
+        <div class="vframe"><iframe src="https://www.youtube-nocookie.com/embed/hpuGIjE-tjk?rel=0&playsinline=1" title="Turn any video into a thread post" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
       </figure>
-      <figure class="howto-vid">
-        <figcaption><span class="howto-num">2</span> Turn any video into a thread post</figcaption>
-        <div class="howto-frame tall">
-          <iframe src="https://www.youtube-nocookie.com/embed/hpuGIjE-tjk?rel=0&playsinline=1" title="How to make thread content from a video"
-                  loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-        </div>
-      </figure>
-      <figure class="howto-vid">
-        <figcaption><span class="howto-num">3</span> Get free traffic with AI comments</figcaption>
-        <div class="howto-frame tall">
-          <iframe src="https://www.youtube-nocookie.com/embed/LZmlkRD1IRg?rel=0&playsinline=1" title="Get free traffic with AI comments"
-                  loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-        </div>
+      <figure>
+        <figcaption>Get free traffic with AI comments</figcaption>
+        <div class="vframe"><iframe src="https://www.youtube-nocookie.com/embed/LZmlkRD1IRg?rel=0&playsinline=1" title="Get free traffic with AI comments" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
       </figure>
     </div>
-  </section>
+  </div>
+</section>
 
-  <section id="jobsSection" class="jobs hidden">
-    <div class="section-head">
-      <h2 class="section-title">Your transcripts</h2>
-      <span class="section-note">tap to read · Copy grabs it all · kept 7 days</span>
+<section class="ch" id="get">
+  <div class="wrap">
+    <div class="center" style="margin-bottom:30px">
+      <span class="eyebrow g">Get the app</span>
+      <h2>Install it in under a minute</h2>
+      <p>Free on both. You'll also want the free ChatGPT app (or Claude) on your phone.</p>
     </div>
-    <div id="jobsList"></div>
-  </section>
-
-  <footer class="foot">
-    <span id="deviceLabel"></span>
-    <button id="unpairBtn" class="linkbtn">Disconnect this phone</button>
-  </footer>
-</main>
-
-<!-- ── Screen 3: one transcript ───────────────────────────────────────── -->
-<main id="viewScreen" class="screen hidden">
-  <div class="view-head">
-    <button id="backBtn" class="btn btn-ghost">‹ Back</button>
-    <div class="seg">
-      <button id="tabStamped" class="seg-btn active">Transcript</button>
-      <button id="tabPlain" class="seg-btn">Words only</button>
+    <div class="cards2">
+      <div class="card">
+        <h3>iPhone</h3>
+        <ol>
+          <li>Tap <b>App Store</b> below, then <b>Get</b>.</li>
+          <li>Open a video in YouTube, tap <b>Share</b> → <b>More</b> → <b>Edit</b>, and tap the green <b>+</b> next to <b>Get Transcript</b>.</li>
+          <li>The first time you record a post, allow notifications, so the "Post recorded" note can show.</li>
+        </ol>
+      </div>
+      <div class="card" id="android">
+        <h3>Android</h3>
+        <ol>
+          <li>Tap <b>Android</b> below on your phone. <b>GetTranscript.apk</b> downloads.</li>
+          <li>Open it. If Android asks, tap <b>Settings</b>, turn on <b>Allow from this source</b>, then go back.</li>
+          <li>Tap <b>Install</b>, then <b>Open</b>. Get Transcript is now in every app's Share menu.</li>
+        </ol>
+      </div>
+    </div>
+    <div class="faq" style="margin-top:26px">
+      <details><summary>Is it really free?</summary><p>Yes. YouTube videos have no limit. Posts, voice notes and other videos can be read up to 20 times a day.</p></details>
+      <details><summary>Do I need ChatGPT Plus?</summary><p>No. The free ChatGPT app works. You can also pick Claude instead, or tap Copy it and paste the words anywhere you like.</p></details>
+      <details><summary>Does my screen recording get uploaded?</summary><p>No. The recording stays on your phone and is turned into pages there. Only those pages (pictures of the post) are sent to be read, and the pages are also saved in your Photos.</p></details>
+      <details><summary>Which apps does it work with?</summary><p>Videos from YouTube, TikTok, Instagram, Facebook and X, plus voice notes and recordings from your phone. Record this post works for written posts on Facebook, LinkedIn and Threads, and for anything else you can scroll through.</p></details>
+      <details><summary>Will ChatGPT get the post right?</summary><p>Most of the time, and the prompts make it check and score its own work. But AI can be wrong, so always read what it wrote before you post it. You're the editor.</p></details>
+      <details><summary>I used the old Share button shortcut or this website before. What changed?</summary><p>The app replaces the shortcut, and everything you had still works. The website version is still here: tap <a href="/app">Web app</a> at the top of this page.</p></details>
+    </div>
+    <div class="cta">
+      <h2>Your next post is in a video you've already watched.</h2>
+      <p>Get the words, hand them to ChatGPT, post. Free for iPhone and Android.</p>
+      <div class="dl">
+        <a class="btn ios" href="https://apps.apple.com/app/get-transcript/id6820350358">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.37 12.6c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.47.83-.72 0-1.82-.81-2.99-.79-1.54.02-2.96.9-3.75 2.27-1.6 2.78-.41 6.89 1.15 9.14.76 1.1 1.67 2.34 2.86 2.3 1.15-.05 1.58-.74 2.97-.74 1.38 0 1.78.74 2.99.72 1.24-.02 2.02-1.12 2.77-2.23.87-1.28 1.23-2.52 1.25-2.58-.03-.01-2.4-.92-2.42-3.66zM14.1 5.86c.63-.77 1.06-1.83.94-2.89-.91.04-2.02.61-2.67 1.37-.58.67-1.1 1.76-.96 2.8 1.02.08 2.06-.52 2.69-1.28z"/></svg>
+          <span class="t"><small>Download on the</small><b>App Store</b></span>
+        </a>
+        <a class="btn android" href="https://github.com/moshbari/gettranscript-downloads/releases/latest/download/GetTranscript.apk">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.6 9.48l1.84-3.18a.38.38 0 00-.66-.38l-1.86 3.22a11.4 11.4 0 00-9.84 0L5.22 5.92a.38.38 0 10-.66.38L6.4 9.48A10.8 10.8 0 001 18h22a10.8 10.8 0 00-5.4-8.52zM7 15.25a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5zm10 0a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5z"/></svg>
+          <span class="t"><small>Download for</small><b>Android</b></span>
+        </a>
+      </div>
     </div>
   </div>
-  <h2 id="viewTitle" class="view-title"></h2>
-  <div class="view-actions">
-    <button id="copyBtn" class="btn btn-primary">Copy all</button>
-    <button id="shareBtn" class="btn btn-ghost hidden">Share</button>
-  </div>
-  <pre id="viewBody" class="transcript"></pre>
-</main>
+</section>
 
-<p class="small appvers" data-appver-line hidden>Newest apps: iPhone <b data-appver="ios"></b> · Android <b data-appver="android"></b></p>
-<p class="tinyfoot"><a href="/coach">Comment Coach</a></p>
+<footer>
+  <nav>
+    <a href="/app">Web app</a>
+    <a href="/prompts">My prompts</a>
+    <a href="/saved">Saved</a>
+    <a href="https://zpresso.org/terms">Terms</a>
+    <a href="https://zpresso.org/privacy">Privacy</a>
+    <a href="https://zpresso.org/refunds">Refunds</a>
+  </nav>
+  <div>Get Transcript by Mosh Bari · © ZPresso LLC</div>
+</footer>
 
-<div id="toast" class="toast hidden"></div>
+<button class="totop" id="totop" type="button" aria-label="Back to top">
+  <svg class="ring" viewBox="0 0 58 58"><circle class="bg" cx="29" cy="29" r="26"/><circle class="fg" id="ringfg" cx="29" cy="29" r="26"/></svg>
+  <span class="disc"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span>
+</button>
 
+<script src="/versions.js" defer></script>
 <script>
-// Light up the visitor's own phone, so the right button is obvious.
-(function () {
-  const ua = navigator.userAgent;
-  const os = /Android/i.test(ua) ? 'android' : /iPhone|iPad|iPod/i.test(ua) ? 'ios' : '';
-  if (os) document.querySelectorAll('.pick[data-os="' + os + '"]').forEach((a) => a.classList.add('yours'));
-})();
+  // Highlight the visitor's own phone.
+  (function () {
+    var ua = navigator.userAgent;
+    var id = /android/i.test(ua) ? 'btn-android' : (/iphone|ipad|ipod/i.test(ua) ? 'btn-ios' : null);
+    if (id) document.getElementById(id).classList.add('mine');
+  })();
+  // Back to top, with a reading-progress ring.
+  (function () {
+    var btn = document.getElementById('totop'), fg = document.getElementById('ringfg');
+    var len = 2 * Math.PI * 26;
+    fg.style.strokeDasharray = len;
+    function update() {
+      var max = document.documentElement.scrollHeight - innerHeight;
+      var p = max > 0 ? scrollY / max : 0;
+      fg.style.strokeDashoffset = len * (1 - p);
+      btn.classList.toggle('show', scrollY > 700);
+    }
+    addEventListener('scroll', update, { passive: true });
+    update();
+    btn.addEventListener('click', function () {
+      history.replaceState(null, '', location.pathname + location.search);
+      scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  })();
 </script>
-<script src="/app.js"></script>
-<script src="/versions.js"></script>
 </body>
 </html>

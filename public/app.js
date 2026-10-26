@@ -405,7 +405,7 @@ function boot() {
     startMain();
     if (shared) {
       $('urlInput').value = shared.trim();
-      history.replaceState({}, '', '/');
+      history.replaceState({}, '', '/app');
       submitUrl();
     }
   } else {

@@ -2,8 +2,8 @@
 // The shell is cached; every /api/ call goes straight to the network, because a
 // cached "your computer is awake" would be a lie.
 
-const CACHE = 'pocket-transcript-v11';
-const SHELL = ['/', '/index.html', '/styles.css', '/app.js',
+const CACHE = 'pocket-transcript-v12';
+const SHELL = ['/app', '/styles.css', '/app.js',
                '/install', '/install.css', '/install.js',
                '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
 
@@ -33,6 +33,6 @@ self.addEventListener('fetch', (e) => {
         caches.open(CACHE).then((c) => c.put(e.request, copy)).catch(() => {});
         return res;
       })
-      .catch(() => caches.match(e.request).then((hit) => hit || caches.match('/index.html')))
+      .catch(() => caches.match(e.request).then((hit) => hit || caches.match('/app')))
   );
 });

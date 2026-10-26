@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0f14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PocketTranscript">
+<title>PocketTranscript</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<header class="bar">
+  <div class="brand">
+    <span class="logo">▶</span>
+    <span>PocketTranscript</span>
+  </div>
+  <div class="bar-right">
+    <a class="helplink" href="/saved" title="Saved for later">📌 Saved</a>
+    <a class="helplink" href="/install" title="Setup guide">Setup</a>
+    <button id="statusPill" class="pill pill-unknown" type="button">
+      <span class="dot"></span><span id="statusText">Checking…</span>
+    </button>
+  </div>
+</header>
+
+<!-- ── Screen 1: pair this phone with the desktop ─────────────────────── -->
+<main id="pairScreen" class="screen hidden">
+  <section class="card picker">
+    <div class="picker-kicker">Free · 1 minute to set up</div>
+    <h2 class="picker-title">Get the Share button on your phone</h2>
+    <p class="picker-sub">Tap <b>Share</b> on any video or voice note, get every word, and send it to ChatGPT or Claude.</p>
+    <div class="picker-grid">
+      <a class="pick" href="/share" data-os="ios">
+        <span class="pick-yours">Your phone</span>
+        <svg class="pick-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
+        <span class="pick-name">iPhone</span>
+        <span class="pick-ver" data-appver-line hidden>App version <b data-appver="ios"></b></span>
+        <span class="pick-go">Set up <span aria-hidden="true">→</span></span>
+      </a>
+      <a class="pick" href="/android/" data-os="android">
+        <span class="pick-yours">Your phone</span>
+        <svg class="pick-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6.2 4.6 8 7.7M17.8 4.6 16 7.7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+          <path d="M2.5 17.5a9.5 9.5 0 0 1 19 0z"/>
+          <circle cx="7.6" cy="13.6" r="1.15" fill="var(--card)"/><circle cx="16.4" cy="13.6" r="1.15" fill="var(--card)"/>
+        </svg>
+        <span class="pick-name">Android</span>
+        <span class="pick-ver" data-appver-line hidden>App version <b data-appver="android"></b></span>
+        <span class="pick-go">Set up <span aria-hidden="true">→</span></span>
+      </a>
+    </div>
+    <div class="howto">
+      <h3 class="howto-title">Watch how it works</h3>
+      <figure class="howto-vid">
+        <figcaption><span class="howto-num">1</span> Install the Share button</figcaption>
+        <div class="howto-frame tall">
+          <iframe src="https://www.youtube-nocookie.com/embed/4vp0607tbkk?rel=0&playsinline=1" title="How to install the Get Transcript Share button"
+                  loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+      </figure>
+      <figure class="howto-vid">
+        <figcaption><span class="howto-num">2</span> Turn any video into a thread post</figcaption>
+        <div class="howto-frame tall">
+          <iframe src="https://www.youtube-nocookie.com/embed/hpuGIjE-tjk?rel=0&playsinline=1" title="How to make thread content from a video"
+                  loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+      </figure>
+      <figure class="howto-vid">
+        <figcaption><span class="howto-num">3</span> Get free traffic with AI comments</figcaption>
+        <div class="howto-frame tall">
+          <iframe src="https://www.youtube-nocookie.com/embed/LZmlkRD1IRg?rel=0&playsinline=1" title="Get free traffic with AI comments"
+                  loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <div class="card intro">
+    <h1>Connect your computer</h1>
+    <p>Your Mac does the actual transcript grabbing. Pair this phone with it once — you'll never do this again on this phone.</p>
+    <ol class="steps">
+      <li>On your Mac, click the <b>YT Transcript Scraper</b> extension.</li>
+      <li>Open the <b>📱 Phone</b> tab and tap <b>Show pairing code</b>.</li>
+      <li>Type the 6 digits below.</li>
+    </ol>
+    <a class="btn btn-ghost btn-lg guide-link" href="/install">📖 Show me, with pictures</a>
+  </div>
+
+
+
+  <div class="card">
+    <label for="codeInput" class="label">Pairing code</label>
+    <input id="codeInput" class="code-input" inputmode="numeric" pattern="[0-9]*"
+           maxlength="6" autocomplete="one-time-code" placeholder="000000">
+    <button id="pairBtn" class="btn btn-primary btn-lg">Connect</button>
+    <p id="pairError" class="error hidden"></p>
+  </div>
+</main>
+
+<!-- ── Screen 2: the everyday screen ──────────────────────────────────── -->
+<main id="mainScreen" class="screen hidden">
+
+  <div id="asleepBanner" class="banner hidden">
+    <div class="banner-title">😴 Your computer is asleep</div>
+    <div class="banner-body">
+      PocketTranscript needs Chrome running on your Mac. Wake it up and this turns green on its own —
+      anything you send meanwhile just waits in the queue.
+      <a class="banner-link" href="/install">Setup guide →</a>
+    </div>
+  </div>
+
+  <div class="card welcome">
+    <h1 class="welcome-title">Get the words from any YouTube video</h1>
+    <p class="welcome-body">Paste a YouTube link below and tap the button. In a few seconds you get <b>every word said in the video</b>,
+      ready to read, copy, or give to ChatGPT or Claude. No typing, no watching the whole thing.</p>
+  </div>
+
+  <div class="card">
+    <label for="urlInput" class="label">1. Paste a YouTube link</label>
+    <div class="input-row">
+      <input id="urlInput" class="text-input" type="url" inputmode="url"
+             autocomplete="off" autocapitalize="off" spellcheck="false"
+             placeholder="https://youtu.be/…">
+      <button id="pasteBtn" class="btn btn-ghost" title="Paste from clipboard">Paste</button>
+    </div>
+    <button id="goBtn" class="btn btn-primary btn-lg">2. Get every word</button>
+    <p class="hint">Copy the link in the YouTube app: tap <b>Share → Copy link</b>.</p>
+    <p id="mainError" class="error hidden"></p>
+  </div>
+
+  <section class="card picker">
+    <div class="picker-kicker">Free · 1 minute to set up</div>
+    <h2 class="picker-title">Get the Share button on your phone</h2>
+    <p class="picker-sub">Tap <b>Share</b> on any video or voice note, get every word, and send it to ChatGPT or Claude.</p>
+    <div class="picker-grid">
+      <a class="pick" href="/share" data-os="ios">
+        <span class="pick-yours">Your phone</span>
+        <svg class="pick-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
+        <span class="pick-name">iPhone</span>
+        <span class="pick-ver" data-appver-line hidden>App version <b data-appver="ios"></b></span>
+        <span class="pick-go">Set up <span aria-hidden="true">→</span></span>
+      </a>
+      <a class="pick" href="/android/" data-os="android">
+        <span class="pick-yours">Your phone</span>
+        <svg class="pick-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6.2 4.6 8 7.7M17.8 4.6 16 7.7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+          <path d="M2.5 17.5a9.5 9.5 0 0 1 19 0z"/>
+          <circle cx="7.6" cy="13.6" r="1.15" fill="var(--card)"/><circle cx="16.4" cy="13.6" r="1.15" fill="var(--card)"/>
+        </svg>
+        <span class="pick-name">Android</span>
+        <span class="pick-ver" data-appver-line hidden>App version <b data-appver="android"></b></span>
+        <span class="pick-go">Set up <span aria-hidden="true">→</span></span>
+      </a>
+    </div>
+    <div class="howto">
+      <h3 class="howto-title">Watch how it works</h3>
+      <figure class="howto-vid">
+        <figcaption><span class="howto-num">1</span> Install the Share button</figcaption>
+        <div class="howto-frame tall">
+          <iframe src="https://www.youtube-nocookie.com/embed/4vp0607tbkk?rel=0&playsinline=1" title="How to install the Get Transcript Share button"
+                  loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+      </figure>
+      <figure class="howto-vid">
+        <figcaption><span class="howto-num">2</span> Turn any video into a thread post</figcaption>
+        <div class="howto-frame tall">
+          <iframe src="https://www.youtube-nocookie.com/embed/hpuGIjE-tjk?rel=0&playsinline=1" title="How to make thread content from a video"
+                  loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+      </figure>
+      <figure class="howto-vid">
+        <figcaption><span class="howto-num">3</span> Get free traffic with AI comments</figcaption>
+        <div class="howto-frame tall">
+          <iframe src="https://www.youtube-nocookie.com/embed/LZmlkRD1IRg?rel=0&playsinline=1" title="Get free traffic with AI comments"
+                  loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <section id="jobsSection" class="jobs hidden">
+    <div class="section-head">
+      <h2 class="section-title">Your transcripts</h2>
+      <span class="section-note">tap to read · Copy grabs it all · kept 7 days</span>
+    </div>
+    <div id="jobsList"></div>
+  </section>
+
+  <footer class="foot">
+    <span id="deviceLabel"></span>
+    <button id="unpairBtn" class="linkbtn">Disconnect this phone</button>
+  </footer>
+</main>
+
+<!-- ── Screen 3: one transcript ───────────────────────────────────────── -->
+<main id="viewScreen" class="screen hidden">
+  <div class="view-head">
+    <button id="backBtn" class="btn btn-ghost">‹ Back</button>
+    <div class="seg">
+      <button id="tabStamped" class="seg-btn active">Transcript</button>
+      <button id="tabPlain" class="seg-btn">Words only</button>
+    </div>
+  </div>
+  <h2 id="viewTitle" class="view-title"></h2>
+  <div class="view-actions">
+    <button id="copyBtn" class="btn btn-primary">Copy all</button>
+    <button id="shareBtn" class="btn btn-ghost hidden">Share</button>
+  </div>
+  <pre id="viewBody" class="transcript"></pre>
+</main>
+
+<p class="small appvers" data-appver-line hidden>Newest apps: iPhone <b data-appver="ios"></b> · Android <b data-appver="android"></b></p>
+<p class="tinyfoot"><a href="/coach">Comment Coach</a></p>
+
+<div id="toast" class="toast hidden"></div>
+
+<script>
+// Light up the visitor's own phone, so the right button is obvious.
+(function () {
+  const ua = navigator.userAgent;
+  const os = /Android/i.test(ua) ? 'android' : /iPhone|iPad|iPod/i.test(ua) ? 'ios' : '';
+  if (os) document.querySelectorAll('.pick[data-os="' + os + '"]').forEach((a) => a.classList.add('yours'));
+})();
+</script>
+<script src="/app.js"></script>
+<script src="/versions.js"></script>
+</body>
+</html>

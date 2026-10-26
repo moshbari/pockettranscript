@@ -1358,8 +1358,16 @@ app.get('/get-transcript.shortcut', (_req, res) => {
 // Private for now: answers only to REPLY_KEY, falls through otherwise.
 app.use(require('./reply'));
 
+// The front page is the sales page; the web app lives at /app. Anything
+// shared into an old install of the web app (its share target was "/") or a
+// /?code=… link still lands in the app.
+app.get('/', (req, res, next) => {
+  const q = req.originalUrl.slice(1);
+  if (/[?&](text|url|title|job|code|pack)=/.test(q)) return res.redirect(302, '/app' + q);
+  next();
+});
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
-app.get('*', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('*', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'app.html')));
 
 // Housekeeping: expired codes, and devices nobody has touched in a fortnight.
 setInterval(() => {
