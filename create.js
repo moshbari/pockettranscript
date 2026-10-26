@@ -125,6 +125,7 @@ function quotaMessage(kind) {
 }
 
 // ----------------------------------------------------------------- prompts --
+const { openingHint } = require('./openings');
 const PACK = JSON.parse(fs.readFileSync(path.join(__dirname, 'packs-uom.json'), 'utf8'));
 const packText = (match) => (PACK.find((p) => match.test(p.name)) || {}).text || '';
 
@@ -159,6 +160,7 @@ function buildPrompt(c, fresh) {
   const base = c.kind === 'comment' ? (c.source === 'post' ? PROMPTS.commentPost : PROMPTS.commentVideo) : PROMPTS[c.kind];
   const head = [c.title, c.url].filter(Boolean).join('\n');
   let p = pointAtInput(base) + '\n\nOUTPUT FOR THIS APP (overrides any output layout above, not the rules):\n' + FORMATS[c.kind];
+  if (c.kind === 'comment') p += openingHint();
   if (fresh) p += `\n\nThis is a fresh version. Here is an earlier one; write something clearly different (a new angle, a new hook), just as good:\n"""\n${fresh}\n"""`;
   return p + `\n\nMy input is below. Use it as-is; don't ask me for it.\n\n${head ? head + '\n\n' : ''}${c.sourceText}`;
 }

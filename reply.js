@@ -13,6 +13,7 @@ const express = require('express');
 const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
+const { openingHint } = require('./openings');
 
 const KEY = process.env.REPLY_KEY || '';
 // A short password Mosh can type once per device at /coach (the page then
@@ -47,7 +48,7 @@ for a comment on a post you recommended skipping, write the best one you can.`;
 
 const REFINE = {
   shorter: 'Make the comment noticeably shorter. Keep the one useful insight.',
-  angle: 'Write a different comment built on a different useful insight from the post.',
+  angle: 'Write a different comment built on a different useful insight from the post. Open it differently from the last one too.',
   bangla: 'Rewrite the comment in natural spoken Bangladeshi Bengali mixed with English where natural (বাংলা for Bengali words, English for English words). Not Kolkata style, not formal.',
   english: 'Rewrite the comment in natural everyday English.',
   warmer: 'Make the comment warmer and more casual, like a friendly community member typing on their phone.',
@@ -184,7 +185,7 @@ router.post('/api/reply/:key/new', async (req, res) => {
     ? `Here is the post as ${images.length} screenshots, in order.${note ? `\n\nMy note: ${note}` : ''}`
     : `Here is the post.${note ? `\n\nMy note: ${note}` : ''}` }];
   for (const url of images) content.push({ type: 'image_url', image_url: { url, detail: 'high' } });
-  const messages = [{ role: 'system', content: state.prompt + OUTPUT_RULES }, { role: 'user', content }];
+  const messages = [{ role: 'system', content: state.prompt + OUTPUT_RULES + openingHint() }, { role: 'user', content }];
 
   try {
     const { text, out } = await askModel(messages);

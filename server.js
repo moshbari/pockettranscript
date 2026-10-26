@@ -598,6 +598,21 @@ function promptOwner(req) {
 const PACKS = { uom: JSON.parse(fs.readFileSync(path.join(__dirname, 'packs-uom.json'), 'utf8')) };
 const DEFAULTS = PACKS.uom;
 
+// Members keep their copy of a pack, so a rewritten pack prompt would never
+// reach them. packs-uom-old.json lists earlier wordings by name: a copy that
+// still matches one of them word for word (never edited) gets the new words.
+function refreshPackCopies() {
+  const old = JSON.parse(fs.readFileSync(path.join(__dirname, 'packs-uom-old.json'), 'utf8'));
+  let n = 0;
+  for (const list of userPrompts.values()) {
+    for (const p of list) {
+      const now = DEFAULTS.find((d) => d.name === p.name);
+      if (now && p.text !== now.text && (old[p.name] || []).includes(p.text)) { p.text = now.text; n++; }
+    }
+  }
+  if (n) { console.log(`[packs] refreshed ${n} saved copy(ies)`); save(); }
+}
+
 // Adds a pack's prompts to the top of a code's list, once per code.
 app.post('/api/prompts/pack', (req, res) => {
   const owner = promptOwner(req);
@@ -1394,4 +1409,5 @@ for (const sig of ['SIGTERM', 'SIGINT']) {
 }
 
 load();
+refreshPackCopies();
 app.listen(PORT, () => console.log(`PocketTranscript listening on ${PORT}`));
