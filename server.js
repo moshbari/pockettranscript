@@ -283,6 +283,7 @@ app.post('/api/desktop/result', (req, res) => {
 
   if (ok && text && text.trim().length > 0) {
     job.status = 'done';
+    job.tookMs = now() - job.createdAt;
     // text = exactly what the desktop .txt download holds (title, video URL,
     // then "0:00 - line" rows). plain = the same words with nothing around them.
     job.text = text;
@@ -688,6 +689,31 @@ function newServerJob(d, fields) {
   return job;
 }
 
+// How long a transcript usually takes, so the phone can show a real
+// countdown instead of a spinner: the median of the last finished ones of the
+// same sort (screenshots, link, recording). Cached for a minute.
+const EXPECT_FALLBACK = { screenshots: 20, link: 30, file: 45 };
+let expectCache = { at: 0, by: {} };
+const sortOf = (job) => job.source === 'screenshots' ? 'screenshots' : job.url ? 'link' : 'file';
+function grabExpect(job) {
+  if (now() - expectCache.at > 60000) {
+    const lists = {};
+    for (const d of devices.values()) {
+      for (const j of d.jobs.values()) {
+        if (j.status === 'done' && j.tookMs > 0 && j.worker === 'server') (lists[sortOf(j)] ||= []).push([j.createdAt, j.tookMs]);
+      }
+    }
+    const by = {};
+    for (const [k, l] of Object.entries(lists)) {
+      const last = l.sort((x, y) => y[0] - x[0]).slice(0, 30).map((x) => x[1]).sort((x, y) => x - y);
+      by[k] = Math.round(last[Math.floor(last.length / 2)] / 1000);
+    }
+    expectCache = { at: now(), by };
+  }
+  const k = sortOf(job);
+  return Math.max(8, Math.min(240, expectCache.by[k] || EXPECT_FALLBACK[k]));
+}
+
 // Same shape as the desktop .txt: title, link, then "0:00 - line" rows.
 function stampedText(job) {
   const segs = job.segments || [];
@@ -700,6 +726,7 @@ function stampedText(job) {
 function finishJob(job, result) {
   if (result.text && result.text.trim()) {
     job.status = 'done';
+    job.tookMs = now() - job.createdAt;
     job.plain = result.text.trim();
     job.segments = Array.isArray(result.segments) ? result.segments : [];
     job.text = stampedText(job);
@@ -870,7 +897,7 @@ app.post('/api/grab-post', (req, res) => {
   const shots = images.length > 1 ? `${images.length} screenshots` : 'screenshot';
   const job = newServerJob(d, { url, source: 'screenshots', title: site ? `Post on ${site} (${shots})` : `Post from ${shots}` });
   runScreenshots(job, images);
-  res.json({ ok: true, id: job.id });
+  res.json({ ok: true, id: job.id, expect: grabExpect(job) });
 });
 
 // "0:07" or "1:02:07", the same stamps the desktop .txt uses.
@@ -910,6 +937,7 @@ async function runYouTube(job, d, { anon }) {
   if (result.text && result.text.trim()) {
     const segs = Array.isArray(result.segments) ? result.segments : [];
     job.status = 'done';
+    job.tookMs = now() - job.createdAt;
     job.plain = result.text.trim();
     job.segments = segs;
     job.text = stampedText(job);
@@ -1012,7 +1040,7 @@ function grab(req, res) {
   const again = recentJob(d, { urls: allUrls(sent || typed), body: typed });
   if (again) {
     if (req.file) fs.rm(req.file.path, { force: true }, () => {});
-    return res.json({ ok: true, id: again.id, again: 'yes' });
+    return res.json({ ok: true, id: again.id, again: 'yes', expect: grabExpect(again) });
   }
   if (typed && !allUrls(typed).length) {
     // Words with no link and nothing we made before: not something to transcribe.
@@ -1044,7 +1072,7 @@ function grab(req, res) {
   if (req.file && req.file.size > 0) {
     const job = newServerJob(d, { title: req.file.originalname || 'Recording from phone' });
     runFile(job, req.file);
-    return res.json({ ok: true, id: job.id });
+    return res.json({ ok: true, id: job.id, expect: grabExpect(job) });
   }
 
   const url = firstUrl(req.body && (req.body.url || req.body.text));
@@ -1056,12 +1084,12 @@ function grab(req, res) {
     // computer's extension only gets it if the server can't.
     const job = newServerJob(d, { url: `https://www.youtube.com/watch?v=${videoId}`, videoId });
     runYouTube(job, d, { anon });
-    return res.json({ ok: true, id: job.id });
+    return res.json({ ok: true, id: job.id, expect: grabExpect(job) });
   }
 
   const job = newServerJob(d, { url });
   runLink(job);
-  res.json({ ok: true, id: job.id });
+  res.json({ ok: true, id: job.id, expect: grabExpect(job) });
 }
 
 // ============================================================ ANDROID ======
@@ -1132,7 +1160,7 @@ app.get('/api/grab/:id', async (req, res) => {
     });
   }
   if (job.status === 'error') return res.json({ ok: true, state: 'error', error: job.error });
-  res.json({ ok: true, state: 'working', pending: 'yes' });
+  res.json({ ok: true, state: 'working', pending: 'yes', expect: grabExpect(job), elapsed: Math.round((now() - job.createdAt) / 1000) });
 });
 
 // ========================================================= saved for later ==
@@ -1302,7 +1330,7 @@ app.post('/api/saved/:id/use', (req, res) => {
   if (it.text) {
     const job = newServerJob(d, { url: it.url, title: it.title, source: it.shots ? 'screenshots' : 'saved' });
     finishJob(job, { text: it.text, segments: [] });
-    return res.json({ ok: true, id: job.id });
+    return res.json({ ok: true, id: job.id, expect: grabExpect(job) });
   }
   if (it.shots) {
     // Screenshots whose words couldn't be read when saved: read them now.
@@ -1315,7 +1343,7 @@ app.post('/api/saved/:id/use', (req, res) => {
       runScreenshots(job, images).then(() => {
         if (job.status === 'done' && !it.text) { it.text = job.plain; it.note = ''; save(); }
       });
-      return res.json({ ok: true, id: job.id });
+      return res.json({ ok: true, id: job.id, expect: grabExpect(job) });
     }
   }
   if (!it.url) return res.status(400).json({ ok: false, error: "There's nothing to read in this one yet." });

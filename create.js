@@ -208,6 +208,7 @@ async function write(c, fresh) {
     if (!c.text) throw new Error('The AI sent back an empty answer. Please try again.');
     c.public = !(await flagged(allText(c)));
     c.status = 'done';
+    c.wroteMs = now() - c.createdAt;
   } catch (e) {
     c.status = 'error';
     c.error = e.message;
@@ -237,6 +238,7 @@ async function draw(c) {
     if (c.image) fs.rm(path.join(IMAGE_DIR, c.image), () => {});
     c.image = name;
     c.imageStatus = 'done';
+    if (c.imageStartedAt) c.drewMs = now() - c.imageStartedAt;
     c.imageError = '';
   } catch (e) {
     c.imageStatus = 'error';
@@ -247,6 +249,16 @@ async function draw(c) {
 }
 
 // ------------------------------------------------------------------- shape --
+// Typical seconds to write each kind, and to draw an image: the median of the
+// last 30 finished, so the phone's countdown matches reality.
+const EXPECT = { post: 45, thread: 60, comment: 25, image: 25 };
+function expectFor(kind) {
+  const field = kind === 'image' ? 'drewMs' : 'wroteMs';
+  const l = creations.filter((x) => x[field] > 0 && (kind === 'image' || x.kind === kind)).slice(0, 30).map((x) => x[field]).sort((a, b) => a - b);
+  const median = l.length >= 3 ? Math.round(l[Math.floor(l.length / 2)] / 1000) : EXPECT[kind];
+  return Math.max(8, Math.min(240, median));
+}
+
 function shape(c, code) {
   const mine = !!code && c.owner === code;
   return {
@@ -262,6 +274,9 @@ function shape(c, code) {
     image: c.image && mine ? `/api/create/${c.id}/image.jpg?deviceId=${code}&v=${encodeURIComponent(c.image)}` : '',
     imageStatus: c.imageStatus || '',
     imageError: c.imageError || '',
+    expect: expectFor(c.kind),
+    imageExpect: expectFor('image'),
+    elapsed: Math.round((now() - c.createdAt) / 1000),
     mine,
     author: authorOf(c.owner),
     shared: !!c.public && !c.hidden,
@@ -342,7 +357,7 @@ router.post('/api/create', (req, res) => {
   save();
   write(c, from ? allText(from) : '');
   console.log(`[create] ${kind} ${c.id} for ${code.slice(0, 6)}${from ? ' from ' + from.id : ''}`);
-  res.json({ ok: true, id: c.id });
+  res.json({ ok: true, id: c.id, expect: expectFor(kind) });
 });
 
 // Waits (up to 40 s) while it's being written or drawn, then answers.
@@ -367,15 +382,16 @@ router.post('/api/create/:id/image', (req, res) => {
   if (!c || c.owner !== code) return res.status(404).json({ ok: false, error: 'That one is no longer available.' });
   if (c.kind === 'comment') return res.status(400).json({ ok: false, error: 'Comments go without an image.' });
   if (c.status !== 'done') return res.status(400).json({ ok: false, error: 'Wait for the words first.' });
-  if (c.imageStatus === 'working') return res.json({ ok: true, id: c.id });
+  if (c.imageStatus === 'working') return res.json({ ok: true, id: c.id, expect: expectFor('image') });
   if (left(code, req.ip, 'image') < 1) return res.status(429).json({ ok: false, quota: true, kind: 'image', ...quotaMessage('image') });
   bump(code, 'image');
   bump('ip:' + req.ip, 'image');
   c.imageStatus = 'working';
+  c.imageStartedAt = now();
   c.imageError = '';
   save();
   draw(c);
-  res.json({ ok: true, id: c.id });
+  res.json({ ok: true, id: c.id, expect: expectFor('image') });
 });
 
 router.get('/api/create/:id/image.jpg', (req, res) => {
