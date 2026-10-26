@@ -1104,6 +1104,7 @@ app.get('/api/grab/:id', async (req, res) => {
     return res.json({
       ok: true, state: 'done',
       title: job.title || '',
+      url: job.url || '',
       words: transcript.split(/\s+/).length,
       transcript: head ? `${head}\n\n${transcript}` : transcript,
       // A few lines for the Shortcut's menu. The whole thing there pushed the
@@ -1357,6 +1358,7 @@ app.get('/get-transcript.shortcut', (_req, res) => {
 
 // Private for now: answers only to REPLY_KEY, falls through otherwise.
 app.use(require('./reply'));
+app.use(require('./create'));
 
 // The front page is the sales page; the web app lives at /app. Anything
 // shared into an old install of the web app (its share target was "/") or a
