@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Early access — Get Transcript</title>
+<meta name="description" content="Try the newest Get Transcript before everyone else.">
+<link rel="icon" href="/img/sales/icon.jpg">
+<link rel="apple-touch-icon" href="/img/sales/icon.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --a1:#0ea5e9; --a2:#6366f1; --grad:linear-gradient(120deg,var(--a1),var(--a2));
+  --bg:#f7fafd; --card:#fff; --ink:#0f172a; --muted:#5b6678; --line:#e3eaf2;
+  --shadow:0 10px 30px rgba(15,40,80,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#0b0f14; --card:#151c25; --ink:#eef3f8; --muted:#9aa7b6; --line:#232d39; --shadow:0 10px 30px rgba(0,0,0,.35); }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+a{color:inherit}
+.wrap{max-width:640px;margin:0 auto;padding:0 16px 60px}
+header{display:flex;align-items:center;gap:10px;padding:18px 0;font-weight:800;font-size:19px}
+header img{width:36px;height:36px;border-radius:9px}
+header a{text-decoration:none;display:flex;align-items:center;gap:10px}
+.eyebrow{display:inline-block;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+h1{font-size:clamp(30px,7vw,42px);line-height:1.08;letter-spacing:-.03em;margin:8px 0 12px}
+.lead{color:var(--muted);margin:0 0 22px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px 22px;box-shadow:var(--shadow);margin-bottom:16px}
+.card h2{margin:0 0 4px;font-size:20px}
+.card p{margin:0 0 12px;color:var(--muted)}
+ol{margin:0 0 14px;padding-left:22px}
+li{margin:8px 0}
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;min-height:56px;border-radius:16px;text-decoration:none;font-weight:700;font-size:17px;padding:12px 18px;margin-top:10px}
+.btn.main{background:var(--grad);color:#fff;box-shadow:0 10px 24px rgba(14,165,233,.3)}
+.btn.soft{background:rgba(14,165,233,.12);color:#0284c7}
+@media (prefers-color-scheme: dark){ .btn.soft{color:#7dd3fc} }
+.new{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.new li{margin:0;padding-left:26px;position:relative}
+.new li::before{content:"✓";position:absolute;left:0;font-weight:800;color:var(--a1)}
+.note{font-size:14px;color:var(--muted)}
+footer{text-align:center;font-size:14px;color:var(--muted);margin-top:26px}
+footer a{text-decoration:none;font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><a href="/"><img src="/img/sales/icon.jpg" alt="">Get Transcript</a></header>
+
+  <span class="eyebrow">Early access</span>
+  <h1>Try the newest version first</h1>
+  <p class="lead">You're getting the test version before everyone else. Use it, and tell us what you love and what's missing.</p>
+
+  <div class="card">
+    <h2>What's new to try</h2>
+    <ul class="new">
+      <li><b>Make it here:</b> the app writes your post, thread or comment for you. Free, 1 of each a day.</li>
+      <li><b>An image for your post</b>, as an extra step. Free, 1 a day.</li>
+      <li><b>Community:</b> see what others made, copy it, or make your own version.</li>
+    </ul>
+  </div>
+
+  <div class="card" id="iphone">
+    <h2>iPhone</h2>
+    <p>Two minutes, on your iPhone:</p>
+    <ol>
+      <li>Install Apple's free <b>TestFlight</b> app.</li>
+      <li>Come back here and tap <b>Join the test</b>.</li>
+      <li>In TestFlight, tap <b>Accept</b>, then <b>Install</b>.</li>
+    </ol>
+    <a class="btn soft" href="https://apps.apple.com/app/testflight/id899247664">1. Get TestFlight</a>
+    <a class="btn main" href="https://testflight.apple.com/join/aCkyrTHZ">2. Join the test</a>
+    <p class="note" style="margin-top:14px">Already have Get Transcript? The test version replaces it, and your transcripts, saved items and prompts stay. New test versions arrive by themselves in TestFlight.</p>
+  </div>
+
+  <div class="card" id="android">
+    <h2>Android</h2>
+    <p>The Android download always has the newest version. Install it over your current one.</p>
+    <a class="btn main" href="https://github.com/moshbari/gettranscript-downloads/releases/latest/download/GetTranscript.apk">Download for Android</a>
+  </div>
+
+  <footer><a href="/">← Back to Get Transcript</a></footer>
+</div>
+</body>
+</html>
