@@ -13,6 +13,12 @@
 // or hide everything from its author (App Store rule 1.2 for apps where
 // people see each other's content); OpenAI's moderation check keeps flagged
 // text out of the feed.
+//
+// What people make in ChatGPT with the prompts reaches the Community too: the
+// app sends the answer back when they come back with it on the clipboard
+// (/api/community/share). That costs nothing — no AI writing, only the free
+// moderation check — and doesn't touch the daily allowance above.
+// People pick a name once; it shows on everything they make.
 
 const express = require('express');
 const crypto = require('crypto');
@@ -52,6 +58,7 @@ let creations = [];            // newest first
 const byId = new Map();
 let usage = {};                // `${day}|${who}|${kind}` -> count (today only)
 let blocks = {};               // code -> [author tags]
+let names = {};                // code -> the name shown on their creations
 let saveTimer = null;
 
 function load() {
@@ -61,6 +68,7 @@ function load() {
     creations = Array.isArray(raw.creations) ? raw.creations : [];
     usage = raw.usage || {};
     blocks = raw.blocks || {};
+    names = raw.names || {};
     for (const c of creations) {
       // Caught mid-way by a restart: nothing to resume.
       if (c.status === 'working') { c.status = 'error'; c.error = 'The server restarted while this was being written. Please try again.'; }
@@ -79,7 +87,7 @@ function saveNow() {
     const day = today();
     for (const k of Object.keys(usage)) if (!k.startsWith(day)) delete usage[k];
     const tmp = STATE_FILE + '.tmp';
-    fs.writeFileSync(tmp, JSON.stringify({ version: 1, creations, usage, blocks }));
+    fs.writeFileSync(tmp, JSON.stringify({ version: 1, creations, usage, blocks, names }));
     fs.renameSync(tmp, STATE_FILE);
   } catch (e) {
     console.error('[create] could not save:', e.message);
@@ -279,6 +287,8 @@ function shape(c, code) {
     elapsed: Math.round((now() - c.createdAt) / 1000),
     mine,
     author: authorOf(c.owner),
+    name: names[c.owner] || '',
+    viaChatGPT: c.source === 'chatgpt',
     shared: !!c.public && !c.hidden,
     createdAt: c.createdAt,
   };
@@ -329,6 +339,7 @@ router.post('/api/create', (req, res) => {
   const kind = from && !b.kind ? from.kind : String(b.kind || '');
   if (!KINDS.includes(kind)) return res.status(400).json({ ok: false, error: 'Pick a post, a thread or a comment.' });
   const sourceText = from ? from.sourceText : String(b.transcript || '').trim().slice(0, MAX_SOURCE);
+  if (from && from.source === 'chatgpt') return res.status(400).json({ ok: false, error: 'This one was made in ChatGPT, so there is nothing here to write a fresh version from.' });
   if (sourceText.length < 20) return res.status(400).json({ ok: false, error: 'There are no words to write from yet.' });
 
   if (left(code, req.ip, kind) < 1) {
@@ -410,6 +421,73 @@ router.delete('/api/create/:id', (req, res) => {
   if (c.image) fs.rm(path.join(IMAGE_DIR, c.image), () => {});
   save();
   res.json({ ok: true });
+});
+
+// The name people go by in the Community, picked once in the app.
+const cleanName = (s) => String(s || '').replace(/[\u0000-\u001f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 40);
+router.get('/api/community/name', (req, res) => {
+  const code = codeOf(req);
+  if (!code) return res.status(400).json({ ok: false, error: 'Missing code.' });
+  res.json({ ok: true, name: names[code] || '' });
+});
+router.post('/api/community/name', async (req, res) => {
+  const code = codeOf(req);
+  if (!code) return res.status(400).json({ ok: false, error: 'Missing code.' });
+  const name = cleanName(req.body?.name);
+  if (name.length < 2) return res.status(400).json({ ok: false, error: 'Please type your name.' });
+  if (await flagged(name)) return res.status(400).json({ ok: false, error: 'Please pick a different name.' });
+  names[code] = name;
+  save();
+  res.json({ ok: true, name });
+});
+
+// What kind of piece a prompt makes, from its name. Other prompts (summaries,
+// key points, translations) are people's own notes and stay out of the feed.
+function kindOfPrompt(name) {
+  const n = String(name || '');
+  if (/comment/i.test(n)) return 'comment';
+  if (/thread/i.test(n)) return 'thread';
+  if (/post|story|villain/i.test(n)) return 'post';
+  return null;
+}
+
+// { deviceId, text, prompt, title, url } — ChatGPT's answer to one of our
+// prompts, sent by the app when the person comes back with it copied.
+router.post('/api/community/share', async (req, res) => {
+  const code = codeOf(req);
+  if (!code) return res.status(400).json({ ok: false, error: 'Missing code.' });
+  const b = req.body || {};
+  const kind = kindOfPrompt(b.prompt);
+  const text = String(b.text || '').trim().slice(0, 20000);
+  if (!kind) return res.json({ ok: true, shared: false, reason: 'not a post' });
+  if (text.length < 80) return res.json({ ok: true, shared: false, reason: 'too short' });
+  // The same answer twice (the app looked twice, or two phones): keep one.
+  const hash = crypto.createHash('sha256').update(text).digest('hex').slice(0, 20);
+  const same = creations.find((c) => c.owner === code && c.hash === hash);
+  if (same) return res.json({ ok: true, shared: same.public && !same.hidden, creation: shape(same, code) });
+  const c = {
+    id: crypto.randomBytes(8).toString('hex'),
+    owner: code,
+    kind,
+    source: 'chatgpt',
+    prompt: String(b.prompt).slice(0, 200),
+    title: String(b.title || '').slice(0, 300),
+    url: String(b.url || '').slice(0, 1000),
+    sourceText: '',
+    text,
+    comments: [],
+    hash,
+    status: 'done',
+    createdAt: now(),
+    updatedAt: now(),
+  };
+  c.public = !(await flagged(text));
+  creations.unshift(c);
+  byId.set(c.id, c);
+  trim();
+  save();
+  console.log(`[create] shared ${kind} ${c.id} from ChatGPT for ${code.slice(0, 6)}${c.public ? '' : ' (flagged, private)'}`);
+  res.json({ ok: true, shared: c.public, creation: shape(c, code) });
 });
 
 // The feed: ?kind=post|thread|comment, ?mine=1 for your own, ?before=<createdAt> for more.
