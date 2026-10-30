@@ -500,9 +500,79 @@ router.get('/api/community', (req, res) => {
   for (const c of creations) {
     if (items.length >= PAGE) break;
     if (c.createdAt >= before) continue;
+    if (c.kind === 'rant') continue;   // RANTs have their own feed (older apps don't know them)
     if (kind && c.kind !== kind) continue;
     if (mine ? c.owner !== code : !visibleTo(c, code)) continue;
     items.push(shape(c, code));
+  }
+  res.json({ ok: true, items, more: items.length === PAGE });
+});
+
+// RANTs: which video someone is reacting to. Only the source video (title,
+// picture, link) — never their recordings or their edit. Shared automatically
+// when a RANT starts, like posts are; their own Community name goes with it.
+// { deviceId, title, url, thumbnail, platform }
+router.post('/api/community/rant', async (req, res) => {
+  const code = codeOf(req);
+  if (!code) return res.status(400).json({ ok: false, error: 'Missing code.' });
+  const b = req.body || {};
+  const url = String(b.url || '').trim().slice(0, 1000);
+  if (!/^https?:\/\//i.test(url)) return res.status(400).json({ ok: false, error: 'Missing the video link.' });
+  const title = String(b.title || '').trim().slice(0, 300) || 'A video';
+  const same = creations.find((c) => c.owner === code && c.kind === 'rant' && c.url === url);
+  if (same) return res.json({ ok: true, shared: same.public && !same.hidden, item: rantShape(same, code) });
+  const c = {
+    id: crypto.randomBytes(8).toString('hex'),
+    owner: code,
+    kind: 'rant',
+    source: 'rant',
+    title,
+    url,
+    thumbnail: /^https:\/\//i.test(b.thumbnail || '') ? String(b.thumbnail).slice(0, 1000) : '',
+    platform: String(b.platform || '').slice(0, 40),
+    text: '',
+    comments: [],
+    status: 'done',
+    createdAt: now(),
+    updatedAt: now(),
+  };
+  c.public = !(await flagged(title));
+  creations.unshift(c);
+  byId.set(c.id, c);
+  trim();
+  save();
+  console.log(`[create] RANT on "${title.slice(0, 60)}" by ${code.slice(0, 6)}${c.public ? '' : ' (flagged, private)'}`);
+  res.json({ ok: true, shared: c.public, item: rantShape(c, code) });
+});
+
+function rantShape(c, code) {
+  const others = creations.filter((x) => x.kind === 'rant' && x.url === c.url && x.owner !== c.owner && x.public && !x.hidden).length;
+  return {
+    id: c.id,
+    title: c.title,
+    url: c.url,
+    thumbnail: c.thumbnail || '',
+    platform: c.platform || '',
+    mine: !!code && c.owner === code,
+    author: authorOf(c.owner),
+    name: names[c.owner] || '',
+    others,
+    shared: !!c.public && !c.hidden,
+    createdAt: c.createdAt,
+  };
+}
+
+// The RANT feed: ?mine=1 for your own, ?before=<createdAt> for more.
+router.get('/api/community/rants', (req, res) => {
+  const code = codeOf(req);
+  const mine = req.query.mine === '1';
+  const before = Number(req.query.before) || Infinity;
+  const items = [];
+  for (const c of creations) {
+    if (items.length >= PAGE) break;
+    if (c.kind !== 'rant' || c.createdAt >= before) continue;
+    if (mine ? c.owner !== code : !visibleTo(c, code)) continue;
+    items.push(rantShape(c, code));
   }
   res.json({ ok: true, items, more: items.length === PAGE });
 });
