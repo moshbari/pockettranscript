@@ -169,17 +169,31 @@ h1{font-size:clamp(36px,6vw,58px);line-height:1.04;letter-spacing:-.035em;margin
 .vframe{position:relative;aspect-ratio:9/16;max-width:320px;margin:0 auto;border-radius:20px;overflow:hidden;background:#000;box-shadow:var(--shadow)}
 .vframe iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 
-/* RANT drawings (illustrations, not screenshots) */
-.rantdraw{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;max-width:720px;margin:30px auto 0}
-.rantdraw figure{margin:0}
-.rantdraw svg{display:block;width:100%;max-width:200px;height:auto;margin:0 auto;filter:drop-shadow(0 16px 26px rgba(15,40,80,.18))}
-.rantdraw figcaption{text-align:center;font-size:14px;font-weight:600;color:var(--muted);margin-top:10px}
-.rantdraw figcaption b{display:block;color:var(--ink)}
-.drawnote{text-align:center;font-size:13px;color:var(--muted);margin:14px 0 0}
-.rd-screen{fill:#1e293b}
-.rd-face{fill:#f1f5f9}
-.rd-skin{fill:#fbbf8a}
-.rd-body{fill:#6366f1}
+/* RANT steps (real app screenshots) + demo video */
+.rsteps{list-style:none;padding:0;margin:34px 0 0;display:grid;grid-template-columns:repeat(5,1fr);gap:18px}
+.rsteps li{display:flex;flex-direction:column;align-items:center;text-align:center}
+.rsteps .phone{width:100%;max-width:200px;aspect-ratio:1284/2778;border-width:5px;border-radius:26px;display:flex;align-items:center}
+.rsteps .phone img{height:100%;object-fit:contain}
+.rsteps .t{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;font-size:16px}
+.rsteps .n{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:800;background:var(--grad);flex:none}
+.rsteps p{margin:6px 0 0;font-size:14px;line-height:1.5;color:var(--muted)}
+.rdemo{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center;max-width:760px;margin:44px auto 0;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:var(--shadow)}
+.rdemo video{display:block;width:240px;aspect-ratio:9/16;border-radius:18px;background:#000}
+.rdemo h3{margin:0 0 8px;font-size:22px}
+.rdemo p{margin:0 0 12px;color:var(--muted)}
+.rdemo .nums{grid-template-columns:1fr;margin:14px 0 0;gap:8px}
+.rdemo .num{display:flex;gap:10px;align-items:baseline;text-align:left;padding:10px 14px}
+.rdemo .num b{font-size:16px}
+@media (max-width:900px){ .rsteps{grid-template-columns:repeat(3,1fr)} }
+@media (max-width:600px){
+  .rsteps{grid-template-columns:1fr;gap:14px}
+  .rsteps li{display:grid;grid-template-columns:96px 1fr;gap:14px;align-items:center;text-align:left}
+  .rsteps .phone{border-width:3px;border-radius:16px}
+  .rsteps .t{justify-content:flex-start;margin-top:0}
+  .rdemo{grid-template-columns:1fr;text-align:center;padding:18px}
+  .rdemo video{width:100%;max-width:280px;margin:0 auto}
+  .rdemo .num{justify-content:center}
+}
 .cards2 .card .sub{margin:0 0 10px;color:var(--muted);font-size:15px}
 
 /* faq + install */
@@ -547,111 +561,38 @@ footer a{text-decoration:none;font-weight:600}
     <div class="center">
       <span class="ch-tag"><span class="n">8</span>RANT: talk over any video</span>
       <h2>Got something to say about a video? Say it on camera.</h2>
-      <p>Some videos deserve more than a written post. You agree, you disagree, you've lived it yourself. A <b>RANT</b> is a commentary video: the video people already care about, your face, and your take on it. People get to know you, trust you, and come looking for you.</p>
-      <div class="but" style="text-align:left">Making one used to mean a computer, screen-recording software, a video editor and a whole evening of cutting, lining things up and adding captions. On a phone, most people never even try.</div>
-      <div class="so" style="text-align:left">Now it's a tab in the app. Paste the video's link and our server fetches it in full 1080p. Press play: the video plays out loud while the front camera quietly films your face, and the mic stays off, so there's no echo. Pause whenever you want to say something and talk to the camera, front or back. Then <b>Keep</b> it or <b>Redo</b> it. Slipped up halfway through a sentence? Tap <b>Oops</b> and only that slip is wiped.</div>
+      <p class="lead">Paste a link, talk over the video, and the app makes the finished RANT for you, <b>captions and all</b>. Just your phone.</p>
     </div>
 
-    <div class="rantdraw" aria-hidden="true">
-      <figure>
-        <svg viewBox="0 0 120 230" role="img">
-          <defs><linearGradient id="rdg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0ea5e9"/><stop offset="1" stop-color="#6366f1"/></linearGradient></defs>
-          <rect x="2" y="2" width="116" height="226" rx="20" fill="#111"/>
-          <rect class="rd-screen" x="8" y="8" width="104" height="214" rx="14"/>
-          <rect x="8" y="40" width="104" height="120" fill="url(#rdg1)"/>
-          <path d="M52 86 L72 100 L52 114 Z" fill="#fff" opacity=".9"/>
-          <rect x="70" y="130" width="36" height="46" rx="8" class="rd-face" stroke="#fff" stroke-width="2"/>
-          <circle cx="88" cy="147" r="8" class="rd-skin"/>
-          <path d="M75 176 Q88 156 101 176 Z" class="rd-body"/>
-          <rect x="30" y="190" width="60" height="18" rx="9" fill="#334155"/>
-          <text x="60" y="203" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" font-family="Inter,system-ui,sans-serif">mic off</text>
-        </svg>
-        <figcaption><b>1. Watch</b>the camera films your face</figcaption>
-      </figure>
-      <figure>
-        <svg viewBox="0 0 120 230" role="img">
-          <defs><linearGradient id="rdg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0ea5e9"/><stop offset="1" stop-color="#6366f1"/></linearGradient></defs>
-          <rect x="2" y="2" width="116" height="226" rx="20" fill="#111"/>
-          <rect class="rd-face" x="8" y="8" width="104" height="214" rx="14"/>
-          <circle cx="60" cy="110" r="26" class="rd-skin"/>
-          <path d="M18 222 Q60 136 102 222 Z" class="rd-body"/>
-          <rect x="14" y="16" width="40" height="30" rx="6" fill="url(#rdg2)" stroke="#fff" stroke-width="2"/>
-          <rect x="29" y="24" width="4" height="14" rx="1" fill="#fff"/><rect x="36" y="24" width="4" height="14" rx="1" fill="#fff"/>
-          <circle cx="98" cy="26" r="7" fill="#ef4444"/>
-        </svg>
-        <figcaption><b>2. Pause &amp; talk</b>Keep, Redo or Oops</figcaption>
-      </figure>
-      <figure>
-        <svg viewBox="0 0 120 230" role="img">
-          <defs><linearGradient id="rdg3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0ea5e9"/><stop offset="1" stop-color="#6366f1"/></linearGradient></defs>
-          <rect x="2" y="2" width="116" height="226" rx="20" fill="#111"/>
-          <rect class="rd-screen" x="8" y="8" width="104" height="214" rx="14"/>
-          <rect x="8" y="40" width="104" height="120" fill="url(#rdg3)"/>
-          <rect x="70" y="130" width="36" height="46" rx="8" class="rd-face" stroke="#fff" stroke-width="2"/>
-          <circle cx="88" cy="147" r="8" class="rd-skin"/>
-          <path d="M75 176 Q88 156 101 176 Z" class="rd-body"/>
-          <rect x="16" y="186" width="88" height="22" rx="6" fill="#fff"/>
-          <rect x="22" y="194" width="22" height="6" rx="3" fill="#0f172a"/><rect x="48" y="194" width="26" height="6" rx="3" fill="#f59e0b"/><rect x="78" y="194" width="20" height="6" rx="3" fill="#0f172a"/>
-          <rect x="74" y="16" width="32" height="16" rx="8" fill="#22a06b"/>
-          <text x="90" y="27.5" text-anchor="middle" font-size="9" font-weight="800" fill="#fff" font-family="Inter,system-ui,sans-serif">1080p</text>
-        </svg>
-        <figcaption><b>3. Make my RANT</b>captions, look, saved</figcaption>
-      </figure>
-    </div>
-    <p class="drawnote">Simple drawings to show the idea, not screenshots of the app.</p>
+    <ol class="rsteps">
+      <li><div class="phone"><img src="/img/sales/rant-get.jpg" alt="RANT tab: the video is ready in 1080p, with a Start your RANT button" loading="lazy"></div>
+        <div><b class="t"><span class="n">1</span>Paste the link</b><p>Tap <b>Get video in 1080p</b>. Leave the screen while it downloads.</p></div></li>
+      <li><div class="phone"><img src="/img/sales/rant-watch.jpg" alt="The video playing, with your face in a small box in the corner" loading="lazy"></div>
+        <div><b class="t"><span class="n">2</span>Play, pause, talk</b><p>Pause when you've got something to say. <b>Keep</b> it or <b>Redo</b> it.</p></div></li>
+      <li><div class="phone"><img src="/img/sales/rant-script.jpg" alt="Teleprompter showing a script above the camera, with Record, reading the script" loading="lazy"></div>
+        <div><b class="t"><span class="n">3</span>Go blank? Use a script</b><p>Dictate it. The teleprompter follows your voice, English or Bangla.</p></div></li>
+      <li><div class="phone"><img src="/img/sales/rant-review.jpg" alt="Review: Cut a bit, with sliders to pick the part to remove" loading="lazy"></div>
+        <div><b class="t"><span class="n">4</span>Polish it</b><p>Cut a bit, blur your face, captions high, middle or low. Silences cut for you.</p></div></li>
+      <li><div class="phone"><img src="/img/sales/rant-done.jpg" alt="The finished RANT: you talking, captions on top, the video in a corner" loading="lazy"></div>
+        <div><b class="t"><span class="n">5</span>Make my RANT</b><p>It's made on our server. Go do something else. It lands in <b>Photos</b>.</p></div></li>
+    </ol>
 
-    <div class="cards2" style="margin-top:34px">
-      <div class="card">
-        <h3>Your first RANT</h3>
-        <ol>
-          <li>Open the <b>RANT</b> tab and paste a video link.</li>
-          <li>Want to say hello first? Tap <b>Start with me</b> and record a short intro.</li>
-          <li>Only need part of the video? Pick where it starts, then press play.</li>
-          <li>Pause, talk, <b>Keep</b> or <b>Redo</b>. Do it as often as you like. Tap <b>End here</b> when you've used enough.</li>
-          <li>Add an ending if you want one, such as what people should do next.</li>
-          <li>Go to <b>Review</b>, then make your RANT and save it to <b>Photos</b> or <b>Files</b>.</li>
-        </ol>
-      </div>
-      <div class="card">
-        <h3>Afraid you'll go blank?</h3>
-        <ol>
-          <li>At any pause, choose <b>Write a script</b> instead of recording straight away.</li>
-          <li>Type it, paste it, or dictate it in <b>English</b> or <b>Bangla</b>. Write scripts for as many points in the video as you like.</li>
-          <li>Tap <b>Record my scripts</b>. The video plays and stops at each point where you wrote one.</li>
-          <li>Your script shows on a teleprompter that moves along as you speak. Read it to the camera, then Keep or Redo.</li>
-        </ol>
-      </div>
-      <div class="card">
-        <h3>Fix it before it's made</h3>
-        <ol>
-          <li>In <b>Review</b>, tap any talk to watch it.</li>
-          <li>Move it a second earlier or later.</li>
-          <li><b>Cut a bit</b> from the middle, <b>record it again</b>, or delete it.</li>
-          <li>The preview at the top shows your look and blur as you change them.</li>
-        </ol>
-      </div>
-      <div class="card">
-        <h3>Make it look finished</h3>
-        <ol>
-          <li><b>Blur Me</b>: a smooth blur over your face, as strong or as light as you want.</li>
-          <li><b>11 colour looks</b> for your camera, with a strength slider.</li>
-          <li><b>Captions</b> in English or Bangla: 6 designs, shown low, in the middle or high.</li>
-          <li><b>Silence cuts</b>: Tight, Natural or Relaxed, so the gaps where you said nothing disappear.</li>
-          <li><b>Even volume</b>, so quiet and loud bits sound alike.</li>
-        </ol>
+    <div class="rdemo">
+      <video src="/img/sales/rant-demo.mp4" poster="/img/sales/rant-done.jpg" controls playsinline preload="none"></video>
+      <div>
+        <h3>Watch a real one</h3>
+        <p>Made start to finish on a phone: a teleprompter script, captions, silences cut. No computer, no editing app.</p>
+        <div class="nums">
+          <div class="num"><b>1080p</b><span>made on our server</span></div>
+          <div class="num"><b>Saved as you go</b><span>even if the app closes</span></div>
+          <div class="num"><b>RANT on this too</b><span>see what others pick in Community</span></div>
+        </div>
+        <p class="note">In the Android app now. On iPhone it's in version 1.0.5, with Apple for review right now.</p>
       </div>
     </div>
 
-    <div class="nums" style="max-width:760px;margin:26px auto 0">
-      <div class="num"><b>1080p</b><span>made on our server</span></div>
-      <div class="num"><b>No computer</b><span>and no editing app</span></div>
-      <div class="num"><b>Saved as you go</b><span>even after a crash</span></div>
-    </div>
-
-    <div class="center" style="margin-top:26px">
-      <p>Once your takes are sent, the finished video is put together on our server in 1080p. You don't need a computer, and your phone doesn't have to sit there with the app open. Every project lives in <span class="tag">My RANTs</span>, saved as you go, so if the app closes or crashes you carry on right where you left off.</p>
-      <p>Not sure what to talk about? The Community has a <span class="tag">RANTs</span> list showing which videos other people are RANTing on. Tap <b>RANT on this too</b> and give your own take on the same video. Only the video's title and link are shared there, never your recordings.</p>
-      <p class="note">RANT is in the Android app now (version 1.8). On iPhone it's in version 1.0.5, which is with Apple for review right now.</p>
+    <div class="center" style="margin-top:30px">
+      <p class="lead" style="margin:0 0 6px">The whole content system is in your phone. <b>What's stopping you?</b></p>
       <a class="next" href="#get" style="justify-content:center;border:0"><span class="arr">↓</span>That's the whole app. Here's how to get it on your phone…</a>
     </div>
   </div>
