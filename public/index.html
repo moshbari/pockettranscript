@@ -131,6 +131,7 @@ h1{font-size:clamp(36px,6vw,58px);line-height:1.04;letter-spacing:-.035em;margin
 .how li{margin:6px 0}
 .tag{display:inline-block;font-weight:700;font-size:14px;padding:1px 9px;border-radius:7px;background:rgba(14,165,233,.12);color:#0284c7;white-space:nowrap}
 @media (prefers-color-scheme: dark){ .tag{color:#7dd3fc} }
+.how .tag{white-space:normal}
 .next{display:flex;align-items:center;gap:12px;margin-top:8px;padding-top:18px;border-top:1px dashed var(--line);font-style:italic;color:var(--muted);text-decoration:none}
 .next:hover{color:var(--ink)}
 .next .arr{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--grad);color:#fff;font-style:normal;font-weight:800}
@@ -167,6 +168,19 @@ h1{font-size:clamp(36px,6vw,58px);line-height:1.04;letter-spacing:-.035em;margin
 .vids figcaption{font-weight:700;margin-bottom:10px;text-align:center}
 .vframe{position:relative;aspect-ratio:9/16;max-width:320px;margin:0 auto;border-radius:20px;overflow:hidden;background:#000;box-shadow:var(--shadow)}
 .vframe iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+
+/* RANT drawings (illustrations, not screenshots) */
+.rantdraw{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;max-width:720px;margin:30px auto 0}
+.rantdraw figure{margin:0}
+.rantdraw svg{display:block;width:100%;max-width:200px;height:auto;margin:0 auto;filter:drop-shadow(0 16px 26px rgba(15,40,80,.18))}
+.rantdraw figcaption{text-align:center;font-size:14px;font-weight:600;color:var(--muted);margin-top:10px}
+.rantdraw figcaption b{display:block;color:var(--ink)}
+.drawnote{text-align:center;font-size:13px;color:var(--muted);margin:14px 0 0}
+.rd-screen{fill:#1e293b}
+.rd-face{fill:#f1f5f9}
+.rd-skin{fill:#fbbf8a}
+.rd-body{fill:#6366f1}
+.cards2 .card .sub{margin:0 0 10px;color:var(--muted);font-size:15px}
 
 /* faq + install */
 .cards2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
@@ -259,6 +273,7 @@ footer a{text-decoration:none;font-weight:600}
       </div>
       <p class="ver" data-appver-line hidden>Newest: iPhone <b data-appver="ios"></b> · Android <b data-appver="android"></b></p>
       <p class="note">Made for people with a 9-to-5 who don't have the time or the energy to do it by hand. This page is also the tutorial. Read it once and you'll know the whole app. <a href="#ch1">Start the story ↓</a></p>
+      <p class="note"><span class="tag">New</span> <b>RANT</b>: talk on camera over any video, right on your phone. <a href="#ch8">See chapter 8 ↓</a></p>
     </div>
     <div>
       <div class="phone"><img src="/img/sales/post-done.jpg" alt="Get Transcript has read a post: 159 words, with Comment on this post at the top of the list"></div>
@@ -303,7 +318,7 @@ footer a{text-decoration:none;font-weight:600}
   </div>
 
   <nav class="map" aria-label="Chapters">
-    <h2>How it works, in 6 short chapters</h2>
+    <h2>How it works, in 8 short chapters</h2>
     <p>Marketing has never been this easy or this cheap. Each chapter fixes the problem the one before it leaves you with. Read them in order.</p>
     <ol>
       <li><a href="#ch1"><span class="n">1</span>Get the words</a></li>
@@ -312,6 +327,8 @@ footer a{text-decoration:none;font-weight:600}
       <li><a href="#ch4"><span class="n">4</span>Posts with no video</a></li>
       <li><a href="#ch5"><span class="n">5</span>A comment that brings people back</a></li>
       <li><a href="#ch6"><span class="n">6</span>Save it for later</a></li>
+      <li><a href="#ch7"><span class="n">7</span>Write it here, see the Community</a></li>
+      <li><a href="#ch8"><span class="n">8</span>RANT: talk over any video</a></li>
     </ol>
   </nav>
 </div>
@@ -472,11 +489,170 @@ footer a{text-decoration:none;font-weight:600}
           <li>Later: open Get Transcript → <b>Saved</b>.</li>
         </ol>
       </div>
-      <a class="next" href="#get"><span class="arr">↓</span>That's the whole app. Here's how to get it on your phone…</a>
+      <a class="next" href="#ch7"><span class="arr">↓</span>Now you've got a list of good ideas. Some days, though, you don't even want to switch apps to write…</a>
     </div>
     <div class="phones">
       <div><div class="phone"><img src="/img/sales/saved.jpg" alt="Saved tab" loading="lazy"></div><p class="cap">Your Saved list</p></div>
       <div><div class="phone"><img src="/img/sales/home.jpg" alt="Get Transcript home screen" loading="lazy"></div><p class="cap">Everything in one place</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 7 MAKE IT HERE + COMMUNITY -->
+<section class="ch" id="ch7">
+  <div class="wrap ch-grid">
+    <div class="ch-text">
+      <span class="ch-tag"><span class="n">7</span>Write it here, see the Community</span>
+      <h2>Write without leaving the app, and never run out of ideas.</h2>
+      <p>Under every transcript there's also <span class="tag">Make it here</span>. Pick a post, a thread or a comment, and Get Transcript writes it for you on the spot. No copying, no pasting, no ChatGPT. Every day you get one post, one thread and one comment free.</p>
+      <div class="but">Writing on your own gets lonely, and some mornings the ideas just dry up. You open Facebook, stare at the box, and post nothing.</div>
+      <div class="so">That's what the <span class="tag">Community</span> tab is for. It shows what other people made from the videos and posts they found, each one with the name its maker picked. Scroll it for ideas, see what's working for others, and use it to spark your own. Your own pieces are under <b>Mine</b>.</div>
+      <p>The Community fills up on its own, too. When you use one of the post, thread or comment prompts in ChatGPT and come back to Get Transcript, the answer you copied is added for you. A note says <b>"Added to the Community"</b>, with <b>Undo</b> right there if you'd rather keep that one to yourself.</p>
+      <div class="how">
+        <h3>Write one here</h3>
+        <ol>
+          <li>Get the words from a video or a post (chapters 1 and 4).</li>
+          <li>Under the transcript, tap <span class="tag">Make it here</span> and choose <b>Post</b>, <b>Thread</b> or <b>Comment</b>.</li>
+          <li>The first time, agree to the Community rules and pick the name people will see.</li>
+          <li>Read it, copy it, post it. It's kept under <b>Community → Mine</b>.</li>
+        </ol>
+      </div>
+      <p>Rather not share what you make in ChatGPT? Turn off <span class="tag">Share what I make in ChatGPT</span> in Settings. You can change your name there too.</p>
+      <a class="next" href="#ch8"><span class="arr">↓</span>Posts and comments are words. But some videos make you want to say something out loud…</a>
+    </div>
+    <div>
+      <div class="card">
+        <h3>Free, every day</h3>
+        <p class="sub">Written for you inside the app with Make it here.</p>
+        <div class="nums" style="margin:0 0 16px">
+          <div class="num"><b>1</b><span>post</span></div>
+          <div class="num"><b>1</b><span>thread</span></div>
+          <div class="num"><b>1</b><span>comment</span></div>
+        </div>
+        <h3>In the Community</h3>
+        <ol>
+          <li><b>Everyone</b>: what other people made, with their names.</li>
+          <li><b>Mine</b>: everything you made, in one place.</li>
+          <li>Your ChatGPT answers are added for you, with <b>Undo</b>.</li>
+          <li>See something that isn't right? <b>Report</b> it or <b>block</b> its maker. Delete your own any time.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 8 RANT -->
+<section class="ch" id="ch8">
+  <div class="wrap">
+    <div class="center">
+      <span class="ch-tag"><span class="n">8</span>RANT: talk over any video</span>
+      <h2>Got something to say about a video? Say it on camera.</h2>
+      <p>Some videos deserve more than a written post. You agree, you disagree, you've lived it yourself. A <b>RANT</b> is a commentary video: the video people already care about, your face, and your take on it. People get to know you, trust you, and come looking for you.</p>
+      <div class="but" style="text-align:left">Making one used to mean a computer, screen-recording software, a video editor and a whole evening of cutting, lining things up and adding captions. On a phone, most people never even try.</div>
+      <div class="so" style="text-align:left">Now it's a tab in the app. Paste the video's link and our server fetches it in full 1080p. Press play: the video plays out loud while the front camera quietly films your face, and the mic stays off, so there's no echo. Pause whenever you want to say something and talk to the camera, front or back. Then <b>Keep</b> it or <b>Redo</b> it. Slipped up halfway through a sentence? Tap <b>Oops</b> and only that slip is wiped.</div>
+    </div>
+
+    <div class="rantdraw" aria-hidden="true">
+      <figure>
+        <svg viewBox="0 0 120 230" role="img">
+          <defs><linearGradient id="rdg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0ea5e9"/><stop offset="1" stop-color="#6366f1"/></linearGradient></defs>
+          <rect x="2" y="2" width="116" height="226" rx="20" fill="#111"/>
+          <rect class="rd-screen" x="8" y="8" width="104" height="214" rx="14"/>
+          <rect x="8" y="40" width="104" height="120" fill="url(#rdg1)"/>
+          <path d="M52 86 L72 100 L52 114 Z" fill="#fff" opacity=".9"/>
+          <rect x="70" y="130" width="36" height="46" rx="8" class="rd-face" stroke="#fff" stroke-width="2"/>
+          <circle cx="88" cy="147" r="8" class="rd-skin"/>
+          <path d="M75 176 Q88 156 101 176 Z" class="rd-body"/>
+          <rect x="30" y="190" width="60" height="18" rx="9" fill="#334155"/>
+          <text x="60" y="203" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" font-family="Inter,system-ui,sans-serif">mic off</text>
+        </svg>
+        <figcaption><b>1. Watch</b>the camera films your face</figcaption>
+      </figure>
+      <figure>
+        <svg viewBox="0 0 120 230" role="img">
+          <defs><linearGradient id="rdg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0ea5e9"/><stop offset="1" stop-color="#6366f1"/></linearGradient></defs>
+          <rect x="2" y="2" width="116" height="226" rx="20" fill="#111"/>
+          <rect class="rd-face" x="8" y="8" width="104" height="214" rx="14"/>
+          <circle cx="60" cy="110" r="26" class="rd-skin"/>
+          <path d="M18 222 Q60 136 102 222 Z" class="rd-body"/>
+          <rect x="14" y="16" width="40" height="30" rx="6" fill="url(#rdg2)" stroke="#fff" stroke-width="2"/>
+          <rect x="29" y="24" width="4" height="14" rx="1" fill="#fff"/><rect x="36" y="24" width="4" height="14" rx="1" fill="#fff"/>
+          <circle cx="98" cy="26" r="7" fill="#ef4444"/>
+        </svg>
+        <figcaption><b>2. Pause &amp; talk</b>Keep, Redo or Oops</figcaption>
+      </figure>
+      <figure>
+        <svg viewBox="0 0 120 230" role="img">
+          <defs><linearGradient id="rdg3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0ea5e9"/><stop offset="1" stop-color="#6366f1"/></linearGradient></defs>
+          <rect x="2" y="2" width="116" height="226" rx="20" fill="#111"/>
+          <rect class="rd-screen" x="8" y="8" width="104" height="214" rx="14"/>
+          <rect x="8" y="40" width="104" height="120" fill="url(#rdg3)"/>
+          <rect x="70" y="130" width="36" height="46" rx="8" class="rd-face" stroke="#fff" stroke-width="2"/>
+          <circle cx="88" cy="147" r="8" class="rd-skin"/>
+          <path d="M75 176 Q88 156 101 176 Z" class="rd-body"/>
+          <rect x="16" y="186" width="88" height="22" rx="6" fill="#fff"/>
+          <rect x="22" y="194" width="22" height="6" rx="3" fill="#0f172a"/><rect x="48" y="194" width="26" height="6" rx="3" fill="#f59e0b"/><rect x="78" y="194" width="20" height="6" rx="3" fill="#0f172a"/>
+          <rect x="74" y="16" width="32" height="16" rx="8" fill="#22a06b"/>
+          <text x="90" y="27.5" text-anchor="middle" font-size="9" font-weight="800" fill="#fff" font-family="Inter,system-ui,sans-serif">1080p</text>
+        </svg>
+        <figcaption><b>3. Make my RANT</b>captions, look, saved</figcaption>
+      </figure>
+    </div>
+    <p class="drawnote">Simple drawings to show the idea, not screenshots of the app.</p>
+
+    <div class="cards2" style="margin-top:34px">
+      <div class="card">
+        <h3>Your first RANT</h3>
+        <ol>
+          <li>Open the <b>RANT</b> tab and paste a video link.</li>
+          <li>Want to say hello first? Tap <b>Start with me</b> and record a short intro.</li>
+          <li>Only need part of the video? Pick where it starts, then press play.</li>
+          <li>Pause, talk, <b>Keep</b> or <b>Redo</b>. Do it as often as you like. Tap <b>End here</b> when you've used enough.</li>
+          <li>Add an ending if you want one, such as what people should do next.</li>
+          <li>Go to <b>Review</b>, then make your RANT and save it to <b>Photos</b> or <b>Files</b>.</li>
+        </ol>
+      </div>
+      <div class="card">
+        <h3>Afraid you'll go blank?</h3>
+        <ol>
+          <li>At any pause, choose <b>Write a script</b> instead of recording straight away.</li>
+          <li>Type it, paste it, or dictate it in <b>English</b> or <b>Bangla</b>. Write scripts for as many points in the video as you like.</li>
+          <li>Tap <b>Record my scripts</b>. The video plays and stops at each point where you wrote one.</li>
+          <li>Your script shows on a teleprompter that moves along as you speak. Read it to the camera, then Keep or Redo.</li>
+        </ol>
+      </div>
+      <div class="card">
+        <h3>Fix it before it's made</h3>
+        <ol>
+          <li>In <b>Review</b>, tap any talk to watch it.</li>
+          <li>Move it a second earlier or later.</li>
+          <li><b>Cut a bit</b> from the middle, <b>record it again</b>, or delete it.</li>
+          <li>The preview at the top shows your look and blur as you change them.</li>
+        </ol>
+      </div>
+      <div class="card">
+        <h3>Make it look finished</h3>
+        <ol>
+          <li><b>Blur Me</b>: a smooth blur over your face, as strong or as light as you want.</li>
+          <li><b>11 colour looks</b> for your camera, with a strength slider.</li>
+          <li><b>Captions</b> in English or Bangla: 6 designs, shown low, in the middle or high.</li>
+          <li><b>Silence cuts</b>: Tight, Natural or Relaxed, so the gaps where you said nothing disappear.</li>
+          <li><b>Even volume</b>, so quiet and loud bits sound alike.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="nums" style="max-width:760px;margin:26px auto 0">
+      <div class="num"><b>1080p</b><span>made on our server</span></div>
+      <div class="num"><b>No computer</b><span>and no editing app</span></div>
+      <div class="num"><b>Saved as you go</b><span>even after a crash</span></div>
+    </div>
+
+    <div class="center" style="margin-top:26px">
+      <p>Once your takes are sent, the finished video is put together on our server in 1080p. You don't need a computer, and your phone doesn't have to sit there with the app open. Every project lives in <span class="tag">My RANTs</span>, saved as you go, so if the app closes or crashes you carry on right where you left off.</p>
+      <p>Not sure what to talk about? The Community has a <span class="tag">RANTs</span> list showing which videos other people are RANTing on. Tap <b>RANT on this too</b> and give your own take on the same video. Only the video's title and link are shared there, never your recordings.</p>
+      <p class="note">RANT is new in the iPhone app, version 1.0.5, which is with Apple for review right now. It's coming to Android.</p>
+      <a class="next" href="#get" style="justify-content:center;border:0"><span class="arr">↓</span>That's the whole app. Here's how to get it on your phone…</a>
     </div>
   </div>
 </section>
@@ -535,6 +711,7 @@ footer a{text-decoration:none;font-weight:600}
           <li>Tap <b>App Store</b> below, then <b>Get</b>.</li>
           <li>Open a video in YouTube, tap <b>Share</b> → <b>More</b> → <b>Edit</b>, and tap the green <b>+</b> next to <b>Get Transcript</b>.</li>
           <li>The first time you record a post, allow notifications, so the "Post recorded" note can show.</li>
+          <li>The first time you RANT, allow the camera and the microphone.</li>
         </ol>
       </div>
       <div class="card" id="android">
@@ -547,7 +724,12 @@ footer a{text-decoration:none;font-weight:600}
       </div>
     </div>
     <div class="faq" style="margin-top:26px">
-      <details><summary>Is it really free?</summary><p>Yes. YouTube videos have no limit. Posts, voice notes and other videos can be read up to 20 times a day.</p></details>
+      <details><summary>Is it really free?</summary><p>Yes. YouTube videos have no limit. Posts, voice notes and other videos can be read up to 20 times a day. Make it here writes one post, one thread and one comment for you every day, free.</p></details>
+      <details><summary>Who sees what I put in the Community?</summary><p>Everyone who uses the app, with the name you picked. Answers you copy from ChatGPT with a post, thread or comment prompt are added for you, and the "Added to the Community" note has an Undo button. You can delete your own pieces any time, or turn off "Share what I make in ChatGPT" in Settings.</p></details>
+      <details><summary>Do I need my computer on to make a RANT?</summary><p>No. The video is fetched and your RANT is put together on our server, in 1080p. Your phone is all you need, and you don't have to keep the app open while it's being made.</p></details>
+      <details><summary>Is RANT on Android?</summary><p>Not yet. It's coming to Android. On iPhone it's in version 1.0.5, which is with Apple for review right now.</p></details>
+      <details><summary>Does the Community see my RANT recordings?</summary><p>No. The Community's RANTs list only shows the title and link of the video you're talking about, so others can RANT on it too. Your recordings stay yours, and you choose where to post the finished video.</p></details>
+      <details><summary>What if the app closes in the middle of a RANT?</summary><p>Nothing is lost. Each RANT is saved as you go and kept in My RANTs, so you open it again and carry on.</p></details>
       <details><summary>Do I need ChatGPT Plus?</summary><p>No. The free ChatGPT app works. You can also pick Claude instead, or tap Copy it and paste the words anywhere you like.</p></details>
       <details><summary>Does my screen recording get uploaded?</summary><p>No. The recording stays on your phone and is turned into pages there. Only those pages (pictures of the post) are sent to be read, and the pages are also saved in your Photos.</p></details>
       <details><summary>Which apps does it work with?</summary><p>Videos from YouTube, TikTok, Instagram, Facebook and X, plus voice notes and recordings from your phone. Record this post works for written posts on Facebook, LinkedIn and Threads, and for anything else you can scroll through.</p></details>
