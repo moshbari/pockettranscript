@@ -161,8 +161,8 @@ h1{font-size:clamp(36px,6vw,58px);line-height:1.04;letter-spacing:-.035em;margin
 .center h2{margin-top:12px}
 
 /* videos */
-.vids{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1000px;margin:30px auto 0}
-@media (max-width:900px){ .vids{grid-template-columns:1fr 1fr} .vids figure:last-child{grid-column:1/-1} }
+.vids{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;max-width:1080px;margin:30px auto 0}
+@media (max-width:900px){ .vids{grid-template-columns:1fr 1fr} }
 .vids figure{margin:0}
 .topvids{margin:44px 0 10px}
 .vids figcaption{font-weight:700;margin-bottom:10px;text-align:center}
@@ -172,8 +172,8 @@ h1{font-size:clamp(36px,6vw,58px);line-height:1.04;letter-spacing:-.035em;margin
 /* RANT steps (real app screenshots) + demo video */
 .rsteps{list-style:none;padding:0;margin:34px 0 0;display:grid;grid-template-columns:repeat(5,1fr);gap:18px}
 .rsteps li{display:flex;flex-direction:column;align-items:center;text-align:center}
-.rsteps .phone{width:100%;max-width:200px;aspect-ratio:1284/2778;border-width:5px;border-radius:26px;display:flex;align-items:center}
-.rsteps .phone img{height:100%;object-fit:contain}
+.rsteps .shot{width:100%;max-width:200px;aspect-ratio:9/16;border-radius:18px;overflow:hidden;background:#111;box-shadow:0 18px 36px rgba(15,40,80,.2)}
+.rsteps .shot img{display:block;width:100%;height:100%;object-fit:cover}
 .rsteps .t{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;font-size:16px}
 .rsteps .n{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:800;background:var(--grad);flex:none}
 .rsteps p{margin:6px 0 0;font-size:14px;line-height:1.5;color:var(--muted)}
@@ -188,7 +188,7 @@ h1{font-size:clamp(36px,6vw,58px);line-height:1.04;letter-spacing:-.035em;margin
 @media (max-width:600px){
   .rsteps{grid-template-columns:1fr;gap:14px}
   .rsteps li{display:grid;grid-template-columns:96px 1fr;gap:14px;align-items:center;text-align:left}
-  .rsteps .phone{border-width:3px;border-radius:16px}
+  .rsteps .shot{border-radius:12px}
   .rsteps .t{justify-content:flex-start;margin-top:0}
   .rdemo{grid-template-columns:1fr;text-align:center;padding:18px}
   .rdemo video{width:100%;max-width:280px;margin:0 auto}
@@ -297,9 +297,9 @@ footer a{text-decoration:none;font-weight:600}
 
   <section class="topvids" id="top-videos" aria-label="Training videos">
     <div class="center">
-      <span class="eyebrow g">Start here: 3 short videos</span>
+      <span class="eyebrow g">Start here: 4 short videos</span>
       <h2>Watch it work on a real phone</h2>
-      <p>A faceless text post, a thread post, and a comment under someone else's post. Each one start to finish.</p>
+      <p>A faceless text post, a thread post, a comment under someone else's post, and a RANT video. Each one start to finish.</p>
     </div>
     <div class="vids">
       <figure>
@@ -313,6 +313,10 @@ footer a{text-decoration:none;font-weight:600}
       <figure>
         <figcaption>Get free traffic with AI comments</figcaption>
         <div class="vframe"><iframe src="https://www.youtube-nocookie.com/embed/LZmlkRD1IRg?rel=0&playsinline=1" title="Get free traffic with AI comments" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
+      </figure>
+      <figure>
+        <figcaption>Make RANT videos on your phone</figcaption>
+        <div class="vframe"><iframe src="https://www.youtube-nocookie.com/embed/f68dX7TqGaQ?rel=0&playsinline=1" title="How to make RANT videos with Get Transcript" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
       </figure>
     </div>
   </section>
@@ -565,20 +569,20 @@ footer a{text-decoration:none;font-weight:600}
     </div>
 
     <ol class="rsteps">
-      <li><div class="phone"><img src="/img/sales/rant-get.jpg" alt="RANT tab: the video is ready in 1080p, with a Start your RANT button" loading="lazy"></div>
+      <li><div class="shot"><img src="/img/sales/rant-get.jpg" alt="RANT tab on a real iPhone: a pasted link and the Get video in 1080p button" loading="lazy"></div>
         <div><b class="t"><span class="n">1</span>Paste the link</b><p>Tap <b>Get video in 1080p</b>. Leave the screen while it downloads.</p></div></li>
-      <li><div class="phone"><img src="/img/sales/rant-watch.jpg" alt="The video playing, with your face in a small box in the corner" loading="lazy"></div>
+      <li><div class="shot"><img src="/img/sales/rant-watch.jpg" alt="The video playing with your face in a small box, and the Pause &amp; talk button" loading="lazy"></div>
         <div><b class="t"><span class="n">2</span>Play, pause, talk</b><p>Pause when you've got something to say. <b>Keep</b> it or <b>Redo</b> it.</p></div></li>
-      <li><div class="phone"><img src="/img/sales/rant-script.jpg" alt="Teleprompter showing a script above the camera, with Record, reading the script" loading="lazy"></div>
-        <div><b class="t"><span class="n">3</span>Go blank? Use a script</b><p>Dictate it. The teleprompter follows your voice, English or Bangla.</p></div></li>
-      <li><div class="phone"><img src="/img/sales/rant-review.jpg" alt="Review: Cut a bit, with sliders to pick the part to remove" loading="lazy"></div>
+      <li><div class="shot"><img src="/img/sales/rant-script.jpg" alt="Teleprompter showing your script above the camera, with Record, reading the script" loading="lazy"></div>
+        <div><b class="t"><span class="n">3</span>Read a script</b><p>Go blank? Dictate a script. The teleprompter follows your voice, English or Bangla.</p></div></li>
+      <li><div class="shot"><img src="/img/sales/rant-review.jpg" alt="Review screen: Blur Me, colour look, captions, cut silences and Make my RANT" loading="lazy"></div>
         <div><b class="t"><span class="n">4</span>Polish it</b><p>Cut a bit, blur your face, captions high, middle or low. Silences cut for you.</p></div></li>
-      <li><div class="phone"><img src="/img/sales/rant-done.jpg" alt="The finished RANT: you talking, captions on top, the video in a corner" loading="lazy"></div>
+      <li><div class="shot"><img src="/img/sales/rant-done.jpg" alt="Your RANT is ready: Save to Photos, Save to Files or share" loading="lazy"></div>
         <div><b class="t"><span class="n">5</span>Make my RANT</b><p>It's made on our server. Go do something else. It lands in <b>Photos</b>.</p></div></li>
     </ol>
 
     <div class="rdemo">
-      <video src="/img/sales/rant-demo.mp4" poster="/img/sales/rant-done.jpg" controls playsinline preload="none"></video>
+      <video src="/img/sales/rant-demo.mp4" poster="/img/sales/rant-poster.jpg" controls playsinline preload="none"></video>
       <div>
         <h3>Watch a real one</h3>
         <p>Made start to finish on a phone: a teleprompter script, captions, silences cut. No computer, no editing app.</p>
@@ -619,7 +623,7 @@ footer a{text-decoration:none;font-weight:600}
     <div class="center">
       <span class="eyebrow g">Watch me do it</span>
       <h2>See it on a real phone</h2>
-      <p>Three short videos, one for each way to get leads: a faceless text post, a thread post, and a comment on someone else's post.</p>
+      <p>Four short videos, one for each way to get leads: a faceless text post, a thread post, a comment on someone else's post, and a RANT video.</p>
     </div>
     <div class="vids">
       <figure>
@@ -633,6 +637,10 @@ footer a{text-decoration:none;font-weight:600}
       <figure>
         <figcaption>Get free traffic with AI comments</figcaption>
         <div class="vframe"><iframe src="https://www.youtube-nocookie.com/embed/LZmlkRD1IRg?rel=0&playsinline=1" title="Get free traffic with AI comments" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
+      </figure>
+      <figure>
+        <figcaption>Make RANT videos on your phone</figcaption>
+        <div class="vframe"><iframe src="https://www.youtube-nocookie.com/embed/f68dX7TqGaQ?rel=0&playsinline=1" title="How to make RANT videos with Get Transcript" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
       </figure>
     </div>
   </div>
