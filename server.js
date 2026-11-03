@@ -1176,7 +1176,9 @@ function savedSummary(it) {
     id: it.id, url: it.url || '', title: it.title || '', site: it.site || '',
     kind: it.kind, preview: previewOf(it.text || it.note || '', 160),
     shots: it.shots || 0, status: it.status, done: !!it.done,
-    author: it.author || '', thumb: !!it.thumb,
+    author: it.author || '', thumb: !!it.thumb, memo: it.memo || '',
+    // For search in the apps: the words, kept short.
+    words: previewOf(it.text || it.caption || '', 600),
     createdAt: it.createdAt,
   };
 }
@@ -1386,7 +1388,7 @@ async function fillSaved(it) {
 async function refillOldSaved() {
   const todo = [];
   for (const list of savedItems.values()) {
-    for (const it of list) if (it.url && it.kind !== 'screenshot' && (it.filled || 0) < FILL_VERSION) todo.push(it);
+    for (const it of list) if (it.url && !it.renamed && it.kind !== 'screenshot' && (it.filled || 0) < FILL_VERSION) todo.push(it);
   }
   if (!todo.length) return;
   console.log(`[saved] naming ${todo.length} older saved item(s)`);
@@ -1509,6 +1511,12 @@ app.patch('/api/saved/:id', (req, res) => {
   const it = owner && findSaved(owner, req.params.id);
   if (!it) return res.status(404).json({ ok: false, error: 'That saved post is gone.' });
   if (typeof req.body?.done === 'boolean') it.done = req.body.done;
+  // Optional, typed by the person in the app: a new name, and their own note.
+  if (typeof req.body?.title === 'string') {
+    const t = squash(req.body.title).slice(0, 200);
+    if (t) { it.title = t; it.renamed = true; }
+  }
+  if (typeof req.body?.memo === 'string') it.memo = req.body.memo.trim().slice(0, 1000);
   save();
   res.json({ ok: true, item: savedSummary(it) });
 });
