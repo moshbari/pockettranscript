@@ -17,6 +17,9 @@
   .item h2{font-size:16.5px;margin:0;line-height:1.35;word-break:break-word}
   .item h2 a{color:inherit;text-decoration:none}
   .preview{margin:0;color:var(--ink-dim);font-size:14.5px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+  .head{display:flex;gap:12px;align-items:flex-start}
+  .head h2{flex:1}
+  .thumb{width:84px;height:84px;object-fit:cover;border-radius:10px;flex:none;background:rgba(127,127,127,.12)}
   .shots{display:flex;gap:6px;overflow-x:auto}
   .shots img{height:120px;border-radius:8px;border:1px solid var(--line, #263241)}
   .acts{display:flex;flex-wrap:wrap;gap:8px}
@@ -168,7 +171,18 @@ function render() {
     } else {
       h.textContent = it.title || 'Saved screenshot';
     }
-    card.append(meta, h);
+    if (it.thumb) {
+      const head = document.createElement('div');
+      head.className = 'head';
+      const img = document.createElement('img');
+      img.className = 'thumb'; img.loading = 'lazy'; img.alt = '';
+      img.src = `/api/saved/${it.id}/thumb` + q();
+      img.addEventListener('error', () => img.remove());
+      head.append(img, h);
+      card.append(meta, head);
+    } else {
+      card.append(meta, h);
+    }
 
     if (it.status === 'reading') {
       const p = document.createElement('p'); p.className = 'preview'; p.textContent = 'Reading it…'; card.append(p);

@@ -1176,6 +1176,7 @@ function savedSummary(it) {
     id: it.id, url: it.url || '', title: it.title || '', site: it.site || '',
     kind: it.kind, preview: previewOf(it.text || it.note || '', 160),
     shots: it.shots || 0, status: it.status, done: !!it.done,
+    author: it.author || '', thumb: !!it.thumb,
     createdAt: it.createdAt,
   };
 }
@@ -1191,32 +1192,228 @@ function findSaved(owner, id) {
 
 function dropSavedFiles(it) {
   for (let n = 0; n < (it.shots || 0); n++) fs.rm(path.join(SAVED_DIR, `${it.id}-${n}.jpg`), { force: true }, () => {});
+  if (it.thumb) fs.rm(path.join(SAVED_DIR, `${it.id}-thumb.jpg`), { force: true }, () => {});
 }
 
-// Title and words for a saved link, from the cheap places only.
-async function fillSaved(it) {
+// ---- Naming saved items (3 Nov 2026) ----------------------------------------
+// Mosh: "it saves without any title… I can save 100 content and be completely
+// confused." The person never types anything (no mandatory steps), so the
+// server works the name out: the caption the app shared, free oEmbed answers
+// (YouTube, TikTok, Vimeo), the page's preview tags (straight, then through the
+// residential proxy, since Facebook/Instagram block servers), and a short AI
+// title from whatever words turned up. A preview picture is kept as a file
+// (Facebook's picture links expire). Last resort: a name from the link itself.
+const PROXY_URL = process.env.PROXY_URL || '';
+let proxyAgent = null;
+function proxied() {
+  if (!PROXY_URL) return null;
+  if (!proxyAgent) {
+    const { ProxyAgent } = require('undici');
+    proxyAgent = new ProxyAgent(PROXY_URL);
+  }
+  return proxyAgent;
+}
+const PREVIEW_UA = 'Mozilla/5.0 (compatible; facebookexternalhit/1.1; +http://www.facebook.com/externalhit_uatext.php)';
+const SITE_LABEL = {
+  'facebook.com': 'Facebook', 'fb.com': 'Facebook', 'fb.watch': 'Facebook', 'instagram.com': 'Instagram',
+  'threads.net': 'Threads', 'threads.com': 'Threads', 'linkedin.com': 'LinkedIn', 'x.com': 'X', 'twitter.com': 'X',
+  'tiktok.com': 'TikTok', 'youtube.com': 'YouTube', 'youtu.be': 'YouTube', 'vimeo.com': 'Vimeo', 'reddit.com': 'Reddit',
+};
+const siteLabel = (site) => SITE_LABEL[String(site || '').replace(/^(business|l|lm)\./, '')] || site || 'the web';
+
+// fetch(), straight or through the proxy (undici's own fetch carries the agent).
+async function fetchVia(url, viaProxy, opts = {}) {
+  const init = { redirect: 'follow', signal: AbortSignal.timeout(opts.timeout || 12000), headers: opts.headers || {} };
+  if (viaProxy) {
+    const agent = proxied();
+    if (!agent) return null;
+    const { fetch: ufetch } = require('undici');
+    return ufetch(url, { ...init, dispatcher: agent });
+  }
+  return fetch(url, init);
+}
+
+// A page's preview tags: { title, text, image }. null when it's a login wall.
+async function pageMeta(url, viaProxy) {
   try {
-    if (extractYtId(it.url)) {
-      it.title = (await youTubeTitle(it.url)) || it.title;
-    } else if (!isTextPostLink(it.url)) {
-      const post = await readPostFromLink(it.url).catch(() => null);
-      if (post) { it.title = post.title; it.text = post.text; }
+    const r = await fetchVia(url, viaProxy, { headers: { 'User-Agent': PREVIEW_UA, 'Accept-Language': 'en' } });
+    if (!r || !r.ok) return null;
+    const html = (await r.text()).slice(0, 800000);
+    const meta = (prop) => {
+      const m = html.match(new RegExp(`<meta[^>]+(?:property|name)=["']${prop}["'][^>]+content=["']([^"']*)["']`, 'i'))
+        || html.match(new RegExp(`<meta[^>]+content=["']([^"']*)["'][^>]+(?:property|name)=["']${prop}["']`, 'i'));
+      return m ? squash(decodeEntities(m[1])) : '';
+    };
+    let title = meta('og:title') || meta('twitter:title') || squash(decodeEntities((html.match(/<title[^>]*>([^<]*)<\/title>/i) || [])[1] || ''));
+    let text = meta('og:description') || meta('twitter:description') || meta('description');
+    const image = meta('og:image') || meta('twitter:image');
+    const wall = /log in|log into|sign up|see posts, photos and more|you must log in/i;
+    if (wall.test(title) || /^(facebook|instagram|threads|linkedin|x|error)$/i.test(title)) title = '';
+    if (wall.test(text) || text.length < 25) text = '';
+    if (!title && !text) return null;
+    return { title, text, image: /^https?:\/\//.test(image) ? image : '' };
+  } catch { return null; }
+}
+
+async function oEmbed(endpoint, url) {
+  try {
+    const r = await fetch(endpoint + encodeURIComponent(url), { signal: AbortSignal.timeout(8000) });
+    return r.ok ? await r.json() : null;
+  } catch { return null; }
+}
+
+// "Jane Smith on Instagram: "3 mistakes…"" → author "Jane Smith", words "3 mistakes…".
+// "Some video title | Facebook" → "Some video title".
+function splitOgTitle(title) {
+  const t = squash(title).replace(/\s*[|•·-]\s*(Facebook|Instagram|LinkedIn|Threads|TikTok)\b.*$/i, '');
+  const m = t.match(/^(.{2,60}?) on (Instagram|Threads|Facebook|LinkedIn|X)\s*:\s*["“]?([\s\S]*?)["”]?$/i);
+  if (m) return { author: m[1].replace(/\s*\(@[^)]*\)/, ''), words: m[3] };
+  const a = t.match(/^(.{2,60}?)\s*\(@[\w.]+\)/);
+  if (a) return { author: a[1], words: '' };
+  return { author: '', words: t };
+}
+
+// Who posted it, from the link alone: facebook.com/janesmith/posts/… → "janesmith".
+function authorFromUrl(url) {
+  try {
+    const u = new URL(url);
+    // Only social sites put the person in the path (bbc.com/news is not "news").
+    if (!/(^|\.)(facebook|instagram|threads|tiktok|x|twitter|linkedin|youtube)\.(com|net)$/.test(u.hostname)) return '';
+    const first = u.pathname.split('/').filter(Boolean)[0] || '';
+    if (/^@[\w.]+$/.test(first)) return first.slice(1);
+    const skip = /^(share|reel|reels|p|tv|watch|videos|video|posts|story\.php|permalink\.php|groups|photo|photos|feed|pulse|in|company|status|i|hashtag|explore|stories|login|profile\.php|events|marketplace)$/i;
+    if (first && !skip.test(first) && /^[\w.\-]{2,40}$/.test(first) && !/^\d+$/.test(first)) {
+      return u.hostname.includes('linkedin.com') ? '' : first;
+    }
+    if (/linkedin\.com$/.test(u.hostname.replace(/^www\./, ''))) {
+      const m = u.pathname.match(/^\/posts\/([a-z0-9-]+?)_/i);
+      if (m) return m[1].replace(/-[0-9a-f]{4,}$/i, '').replace(/-/g, ' ');
+    }
+  } catch { /* fine */ }
+  return '';
+}
+
+// A short name for the post from its words (the post's own language).
+async function aiTitle(words) {
+  if (!OCR_KEY || !words || words.length < 30) return '';
+  try {
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${OCR_KEY}` },
+      body: JSON.stringify({
+        model: OCR_MODEL,
+        messages: [{ role: 'user', content: `Give this social media post or video a short title, 3 to 8 words, that says what it is about, so the person who saved it recognises it later in a list. Use the same language as the post. No quotes, no hashtags, no emoji, no full stop. Output only the title.\n\n${words.slice(0, 3000)}` }],
+      }),
+      signal: AbortSignal.timeout(30000),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) return '';
+    const t = squash(String(data.choices?.[0]?.message?.content || '')).replace(/^["“'`]+|["”'`.]+$/g, '');
+    return t.length >= 3 && t.length <= 90 ? t : '';
+  } catch { return ''; }
+}
+
+// Keeps the preview picture as a file (via the proxy too if needed).
+async function keepThumb(it, imageUrl) {
+  if (!imageUrl) return;
+  for (const viaProxy of [false, true]) {
+    try {
+      const r = await fetchVia(imageUrl, viaProxy, { timeout: 12000, headers: { 'User-Agent': PREVIEW_UA } });
+      if (!r || !r.ok || !/^image\//.test(r.headers.get('content-type') || '')) continue;
+      const buf = Buffer.from(await r.arrayBuffer());
+      if (buf.length < 500 || buf.length > 3e6) continue;
+      fs.mkdirSync(SAVED_DIR, { recursive: true });
+      fs.writeFileSync(path.join(SAVED_DIR, `${it.id}-thumb.jpg`), buf);
+      it.thumb = true;
+      return;
+    } catch { /* try the next way */ }
+  }
+}
+
+const GENERIC_TITLE = /^(Post|Video) on |^Saved screenshot$|^Post by .{1,60} on (Facebook|Instagram|LinkedIn|Threads|X|TikTok)$|^$/;
+const FILL_VERSION = 2;
+
+async function fillSaved(it) {
+  const url = it.url;
+  let author = '', title = '', words = '', image = '';
+  try {
+    const yt = extractYtId(url);
+    if (yt) {
+      const o = await oEmbed('https://www.youtube.com/oembed?format=json&url=', url);
+      title = o?.title || ''; author = o?.author_name || '';
+      image = `https://i.ytimg.com/vi/${yt}/hqdefault.jpg`;
+    } else if (/tiktok\.com$/.test(it.site)) {
+      const o = await oEmbed('https://www.tiktok.com/oembed?url=', url);
+      words = o?.title || ''; author = o?.author_name || ''; image = o?.thumbnail_url || '';
+    } else if (/vimeo\.com$/.test(it.site)) {
+      const o = await oEmbed('https://vimeo.com/api/oembed.json?url=', url);
+      title = o?.title || ''; author = o?.author_name || ''; image = o?.thumbnail_url || '';
+    } else if (/(^|\.)(x|twitter)\.com$/.test(it.site)) {
+      const post = await readPostFromLink(url).catch(() => null);
+      if (post) { words = post.text; author = (post.title.match(/^Post by (.+) on X$/) || [])[1] || ''; }
+    }
+    if (!title && !words) {
+      const m = (await pageMeta(url, false)) || (await pageMeta(url, true));
+      if (m) {
+        const sp = splitOgTitle(m.title);
+        author = author || sp.author;
+        words = m.text || sp.words;
+        // A real headline (articles, YouTube-like pages) is kept as it is.
+        if (sp.words && sp.words !== m.text && sp.words.length <= 90 && !m.text.startsWith(sp.words.slice(0, 30))) title = sp.words;
+        image = image || m.image;
+      }
     }
   } catch { /* the link alone is still worth keeping */ }
-  if (!it.title) it.title = it.kind === 'video' ? `Video on ${it.site}` : `Post on ${it.site || 'the web'}`;
+
+  // The words the app shared along with the link (Instagram/TikTok captions).
+  if (!words && it.caption && it.caption.length >= 25) words = it.caption;
+  if (words && !it.text) it.text = words;
+  if (!title && words) title = (await aiTitle(words)) || words.slice(0, 80).replace(/\s+\S*$/, '') + (words.length > 80 ? '…' : '');
+  author = squash(author || authorFromUrl(url)).slice(0, 60);
+  if (author) it.author = author;
+  const where = siteLabel(it.site);
+  const what = it.kind === 'video' ? 'Video' : 'Post';
+  if (title) it.title = author && !title.toLowerCase().includes(author.toLowerCase()) ? `${author}: ${title}` : title;
+  else if (!it.title || GENERIC_TITLE.test(it.title)) it.title = author ? `${what} by ${author} on ${where}` : `${what} on ${where}`;
+  await keepThumb(it, image);
+  it.filled = FILL_VERSION;
   it.status = 'ready';
   save();
+}
+
+// Saved before 3 Nov 2026 (or before this version): name them again, one at a
+// time, in the background, so the old "Post on facebook.com" rows get names too.
+async function refillOldSaved() {
+  const todo = [];
+  for (const list of savedItems.values()) {
+    for (const it of list) if (it.url && it.kind !== 'screenshot' && (it.filled || 0) < FILL_VERSION) todo.push(it);
+  }
+  if (!todo.length) return;
+  console.log(`[saved] naming ${todo.length} older saved item(s)`);
+  for (const it of todo) {
+    const before = it.title;
+    const keep = before && !GENERIC_TITLE.test(before) ? before : '';
+    await fillSaved(it).catch(() => {});
+    if (keep && GENERIC_TITLE.test(it.title)) it.title = keep;   // never make a good name worse
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+  console.log('[saved] older items named');
 }
 
 async function readSavedShots(it, images) {
   try {
     it.text = await readScreenshots(images);
-    const author = (it.text.split('\n')[0] || '').trim();
-    if (!it.title && author && author.length < 60) it.title = `Post by ${author}`;
+    const first = (it.text.split('\n')[0] || '').trim();
+    const author = first.length < 60 && !/^\[Picture/.test(first) ? first : '';
+    if (author) it.author = author;
+    const topic = await aiTitle(author ? it.text.slice(first.length) : it.text);
+    if (!it.title && topic) it.title = author ? `${author}: ${topic}` : topic;
+    if (!it.title && author) it.title = `Post by ${author}`;
   } catch (e) {
     it.note = `Couldn't read the words yet (${e.message}). The screenshots are kept.`;
   }
-  if (!it.title) it.title = it.site ? `Post on ${it.site}` : 'Saved screenshot';
+  if (!it.title) it.title = it.site ? `Post on ${siteLabel(it.site)}` : 'Saved screenshot';
+  it.filled = FILL_VERSION;
   it.status = 'ready';
   save();
 }
@@ -1287,6 +1484,14 @@ app.get('/api/saved/:id', (req, res) => {
   const it = owner && findSaved(owner, req.params.id);
   if (!it) return res.status(404).json({ ok: false, error: 'That saved post is gone.' });
   res.json({ ok: true, item: { ...savedSummary(it), text: it.text || '', note: it.note || '', caption: it.caption || '' } });
+});
+
+app.get('/api/saved/:id/thumb', (req, res) => {
+  const owner = savedOwner(req);
+  const it = owner && findSaved(owner, req.params.id);
+  if (!it || !it.thumb) return res.status(404).end();
+  res.set('Cache-Control', 'private, max-age=86400');
+  res.sendFile(path.join(SAVED_DIR, `${it.id}-thumb.jpg`), (err) => { if (err && !res.headersSent) res.status(404).end(); });
 });
 
 app.get('/api/saved/:id/shot/:n', (req, res) => {
@@ -1438,4 +1643,7 @@ for (const sig of ['SIGTERM', 'SIGINT']) {
 
 load();
 refreshPackCopies();
-app.listen(PORT, () => console.log(`PocketTranscript listening on ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`PocketTranscript listening on ${PORT}`);
+  setTimeout(() => refillOldSaved().catch((e) => console.log('[saved] refill stopped:', e.message)), 20000);
+});

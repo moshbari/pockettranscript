@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "express": "^4.19.2",
-    "multer": "^2.4.0"
+    "multer": "^2.4.0",
+    "undici": "^6.29.1"
   }
 }
