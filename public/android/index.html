@@ -229,7 +229,9 @@ function pointAtTranscript(text) {
 // Android's own Share list: the person picks ChatGPT or Claude, and that app
 // opens a new chat with everything filled in. Copied too, as a backup.
 function send(instruction, worded) {
-  const full = (worded ? instruction : pointAtTranscript(instruction)) + '\n\nHere is the transcript:\n\n' + transcript;
+  // The transcript FIRST, the prompt under it, so the AI's first-line preview shows which video/post it is.
+  const ins = (worded ? instruction : pointAtTranscript(instruction)).replace(/\s*My input is the transcript below\.[^\n]*/, '').trim();
+  const full = transcript.trim() + '\n\n---\n\n' + ins + "\n\nMy input is the text above. Use it as-is; don't ask me for it.";
   try { navigator.clipboard.writeText(full); } catch { /* share still works */ }
   if (navigator.share) {
     navigator.share({ text: full }).catch(() => {});
