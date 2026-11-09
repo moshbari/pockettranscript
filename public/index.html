@@ -169,6 +169,38 @@ h1{font-size:clamp(36px,6vw,58px);line-height:1.04;letter-spacing:-.035em;margin
 .vframe{position:relative;aspect-ratio:9/16;max-width:320px;margin:0 auto;border-radius:20px;overflow:hidden;background:#000;box-shadow:var(--shadow)}
 .vframe iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 
+/* NEW in RANT: story cards, picture + words */
+.newx{padding:96px 0;border-top:1px solid var(--line);background:linear-gradient(180deg,var(--bg2),var(--bg))}
+.newx .eyebrow{color:#d946ef}
+.newx h2{font-size:clamp(30px,4.4vw,44px);letter-spacing:-.025em;line-height:1.08;margin:12px 0 14px}
+.nx-jump{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:26px auto 0;max-width:860px}
+.nx-jump a{text-decoration:none;font-weight:600;font-size:14px;padding:7px 13px;border-radius:999px;background:var(--card);border:1px solid var(--line)}
+.nx-jump a:hover{border-color:#d946ef}
+.nx{display:grid;grid-template-columns:300px 1fr;gap:44px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:26px;padding:34px;box-shadow:var(--shadow);margin-top:34px;scroll-margin-top:20px}
+.nx:nth-of-type(even){grid-template-columns:1fr 300px}
+.nx:nth-of-type(even) .nx-pic{order:2}
+.nx-pic{border-radius:24px;overflow:hidden;background:#000;border:6px solid #111;box-shadow:0 22px 44px rgba(15,40,80,.22);max-width:300px;margin:0 auto}
+.nx-pic img{display:block;width:100%}
+.nx-k{display:inline-flex;align-items:center;gap:10px;font-weight:700;font-size:14px;color:#c026d3}
+.nx-k .n{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px;background:linear-gradient(120deg,#d946ef,#6366f1)}
+.nx h3{font-size:clamp(24px,3vw,31px);letter-spacing:-.02em;line-height:1.15;margin:10px 0 14px}
+.nx p{margin:0 0 14px}
+.nx .but{margin:0 0 14px}
+.nx .so{margin:0 0 16px;font-weight:600}
+.nx ul{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.nx li{position:relative;padding-left:30px;font-size:16px;line-height:1.5}
+.nx li::before{content:"✓";position:absolute;left:0;top:1px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;color:#fff;background:var(--keep)}
+.nx-new{display:inline-block;margin-left:6px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:#d946ef;color:#fff;vertical-align:middle}
+.nx-end{max-width:760px;margin:40px auto 0;text-align:center;background:var(--card);border:2px solid #d946ef;border-radius:22px;padding:26px 24px;box-shadow:var(--shadow)}
+.nx-end b{display:block;font-size:22px;margin-bottom:6px;letter-spacing:-.01em}
+.nx-end p{margin:0 0 16px;color:var(--muted)}
+@media (max-width:820px){
+  .newx{padding:70px 0}
+  .nx,.nx:nth-of-type(even){grid-template-columns:1fr;gap:24px;padding:22px}
+  .nx:nth-of-type(even) .nx-pic{order:0}
+  .nx-pic{max-width:260px}
+}
+
 /* RANT steps (real app screenshots) + demo video */
 .rsteps{list-style:none;padding:0;margin:34px 0 0;display:grid;grid-template-columns:repeat(5,1fr);gap:18px}
 .rsteps li{display:flex;flex-direction:column;align-items:center;text-align:center}
@@ -347,6 +379,7 @@ footer a{text-decoration:none;font-weight:600}
       <li><a href="#ch6"><span class="n">6</span>Save it for later</a></li>
       <li><a href="#ch7"><span class="n">7</span>Write it here, see the Community</a></li>
       <li><a href="#ch8"><span class="n">8</span>RANT: talk over any video</a></li>
+      <li><a href="#new"><span class="n">★</span>New in RANT: 10 new things</a></li>
     </ol>
   </nav>
 </div>
@@ -591,13 +624,189 @@ footer a{text-decoration:none;font-weight:600}
           <div class="num"><b>Saved as you go</b><span>even if the app closes</span></div>
           <div class="num"><b>RANT on this too</b><span>see what others pick in Community</span></div>
         </div>
-        <p class="note">In the Android app now. On iPhone it's in version 1.0.5, with Apple for review right now.</p>
+        <p class="note">On iPhone and Android. <a href="#new">See what's new ↓</a></p>
       </div>
     </div>
 
     <div class="center" style="margin-top:30px">
       <p class="lead" style="margin:0 0 6px">The whole content system is in your phone. <b>What's stopping you?</b></p>
-      <a class="next" href="#get" style="justify-content:center;border:0"><span class="arr">↓</span>That's the whole app. Here's how to get it on your phone…</a>
+      <a class="next" href="#new" style="justify-content:center;border:0"><span class="arr">↓</span>And there's more. Here's what's new in RANT…</a>
+    </div>
+  </div>
+</section>
+
+<!-- NEW IN RANT -->
+<section class="newx" id="new">
+  <div class="wrap">
+    <div class="center">
+      <span class="eyebrow">New in RANT</span>
+      <h2>10 new ways to make your RANT <span class="g">faster and better</span></h2>
+      <p class="lead" style="margin:0">Each one fixes something that used to slow you down. Real screens from the app.</p>
+    </div>
+    <nav class="nx-jump" aria-label="New in RANT"><a href="#nx-ready">Ready-made RANT, your way</a><a href="#nx-anywhere">One tap from anywhere</a><a href="#nx-pick">Pick your part</a><a href="#nx-words">Pick by words</a><a href="#nx-oops">Oops you can see</a><a href="#nx-blur">Blur what shouldn't be seen</a><a href="#nx-finish">Finish the whole video here</a><a href="#nx-fix">Fix one thing, keep the rest</a><a href="#nx-post">Your Facebook post, already written</a><a href="#nx-batch">Batch render</a></nav>
+    <article class="nx" id="nx-ready">
+      <div class="nx-pic"><img src="/img/sales/new-ready.jpg" alt="Ready-made RANT screen: English or Bangla, six tones, your own instructions box and Write my RANTs" loading="lazy"></div>
+      <div>
+        <span class="nx-k"><span class="n">1</span>Ready-made RANT, your way <span class="nx-new">New</span></span>
+        <h3>Want it funny? Want it to roast? Just tap.</h3>
+        <p>Ready-made RANT watches the video for you and writes short RANTs at the best moments. All you do is read them out.</p>
+        <p class="but">The catch: every RANT came out sounding the same. Some days you want to joke. Some days you want to hit hard.</p>
+        <p class="so">So now you pick the mood first, and you can tell it exactly what you want.</p>
+        <ul>
+          <li>Pick a tone: Normal, Funny, Roast the creator, Roast the system, Wise comedian or Straight talk.</li>
+          <li>Type your own rule, like <i>“2 lines max, only 2 RANTs”</i>.</li>
+          <li>Write them in English or বাংলা.</li>
+          <li>The app remembers your choice for next time. All of it is optional.</li>
+        </ul>
+      </div>
+    </article>
+    <article class="nx" id="nx-anywhere">
+      <div class="nx-pic"><img src="/img/sales/new-anywhere.jpg" alt="A My RANTs card with Review, Ready-made RANT and Make a copy buttons" loading="lazy"></div>
+      <div>
+        <span class="nx-k"><span class="n">2</span>One tap from anywhere <span class="nx-new">New</span></span>
+        <h3>See a video. Tap once. Your RANT is being written.</h3>
+        <p>Good videos show up everywhere: in YouTube, in Facebook, or in an old RANT you already made.</p>
+        <p class="but">Before, you had to open the app, paste the link, wait, and then go looking for the Ready-made button.</p>
+        <p class="so">These days the button sits right where you already are.</p>
+        <ul>
+          <li>From the <b>Share</b> button in YouTube, Facebook and other apps.</li>
+          <li>On every card in <b>My RANTs</b>.</li>
+          <li>Right after you paste a link.</li>
+          <li><b>Make a copy</b> of any RANT to try it a new way. The first one stays safe.</li>
+        </ul>
+      </div>
+    </article>
+    <article class="nx" id="nx-pick">
+      <div class="nx-pic"><img src="/img/sales/new-pick.jpg" alt="Pick your part: yellow handles over the video, Mark it live, Pick by words and Add this part" loading="lazy"></div>
+      <div>
+        <span class="nx-k"><span class="n">3</span>Pick your part</span>
+        <h3>Only want 10 seconds of a 10-minute video?</h3>
+        <p>Most videos have one great bit. That's the bit you actually want to talk about.</p>
+        <p class="but">Here's the problem: talking over the whole video makes your RANT long, and long videos get skipped.</p>
+        <p class="so">That's why you can keep just your part and leave the rest out.</p>
+        <ul>
+          <li>Drag the yellow handles. Hold one still to zoom in.</li>
+          <li>Or tap <b>Mark it live</b>: tap Start and Stop while it plays.</li>
+          <li>Want three bits? Tap <b>+ Add this part</b> for each one.</li>
+          <li>The video stops at the end of each part, so it's your turn to talk.</li>
+          <li>The bits in between are cut out for you.</li>
+        </ul>
+      </div>
+    </article>
+    <article class="nx" id="nx-words">
+      <div class="nx-pic"><img src="/img/sales/new-words.jpg" alt="Pick by words: a search for Share, two lines picked, 12 seconds, Use these words" loading="lazy"></div>
+      <div>
+        <span class="nx-k"><span class="n">4</span>Pick by words</span>
+        <h3>Remember what they said, but not when?</h3>
+        <p>You heard a line in the video and you want to talk about it.</p>
+        <p class="but">Finding it by dragging back and forth takes forever.</p>
+        <p class="so">Search for the words instead, and the app finds the moment.</p>
+        <ul>
+          <li>Type a word. Every line with that word shows up.</li>
+          <li>Tap the first line, then the last line. That's your part.</li>
+          <li>Fine-tune it with the yellow handles if you want.</li>
+        </ul>
+      </div>
+    </article>
+    <article class="nx" id="nx-oops">
+      <div class="nx-pic"><img src="/img/sales/new-oops.jpg" alt="Cut a bit: a red block on the timeline and a cut marked with an orange Oops tag" loading="lazy"></div>
+      <div>
+        <span class="nx-k"><span class="n">5</span>Oops you can see <span class="nx-new">New</span></span>
+        <h3>Messed up a sentence? Tap Oops and keep going.</h3>
+        <p>Everyone trips over words. You don't need to stop and start again.</p>
+        <p class="but">Until now, you couldn't tell if Oops had worked. Was the mistake gone, or still in your video? You just had to hope.</p>
+        <p class="so">Now every Oops shows up as a red block you can check yourself.</p>
+        <ul>
+          <li>Tap <b>Oops</b>, take a breath, and say the sentence again.</li>
+          <li>In <b>Cut a bit</b>, each Oops is red, with an orange <b>Oops</b> tag.</li>
+          <li>Tap <b>Play this cut</b> to hear exactly what goes.</li>
+          <li>Wrong spot? Move the edges, or tap <b>Put it back</b>.</li>
+        </ul>
+      </div>
+    </article>
+    <article class="nx" id="nx-blur">
+      <div class="nx-pic"><img src="/img/sales/new-blur.jpg" alt="Review: Blur the video card with the Blur a part button" loading="lazy"></div>
+      <div>
+        <span class="nx-k"><span class="n">6</span>Blur what shouldn't be seen</span>
+        <h3>Hide a face, a logo, or anything not modest.</h3>
+        <p>Some videos show things you don't want in yours.</p>
+        <p class="but">Cutting those parts out breaks the story, and then your RANT makes no sense.</p>
+        <p class="so">Blur them instead. The picture goes soft and the sound keeps playing.</p>
+        <ul>
+          <li><b>Blur the video:</b> tap Blur while you watch, or mark the parts later in Review.</li>
+          <li><b>Portrait blur:</b> you stay sharp and the room behind you goes soft, like the iPhone's Portrait camera.</li>
+          <li>You see it live on the camera while you film. You choose how much.</li>
+        </ul>
+      </div>
+    </article>
+    <article class="nx" id="nx-finish">
+      <div class="nx-pic"><img src="/img/sales/new-cta.jpg" alt="Review: CTA clip at the end with Record with teleprompter, Just record, From Photos, From Files or a link" loading="lazy"></div>
+      <div>
+        <span class="nx-k"><span class="n">7</span>Finish the whole video here</span>
+        <h3>End with what people should do next.</h3>
+        <p>A good video ends by telling people what to do: message me, click the link, follow me.</p>
+        <p class="but">That used to mean a second editing app, and usually a computer too.</p>
+        <p class="so">Here, it's one card in Review.</p>
+        <ul>
+          <li><b>CTA clip at the end:</b> record it reading your script on the teleprompter, or pick it from Photos, Files or a link like Tella.</li>
+          <li>The app remembers it for your next RANT.</li>
+          <li><b>More clips:</b> add clips before or after your RANT, in any order.</li>
+          <li>No other editing app needed.</li>
+        </ul>
+      </div>
+    </article>
+    <article class="nx" id="nx-fix">
+      <div class="nx-pic"><img src="/img/sales/new-fix.jpg" alt="Your part card: Add a part, Keep watching and Film my part again" loading="lazy"></div>
+      <div>
+        <span class="nx-k"><span class="n">8</span>Fix one thing, keep the rest</span>
+        <h3>Spotted one mistake? Fix just that.</h3>
+        <p>You watch your finished RANT and one talk isn't right.</p>
+        <p class="but">Starting again from zero throws away all your good work.</p>
+        <p class="so">So you only change the part that's wrong.</p>
+        <ul>
+          <li><b>Replace</b> one talk. Everything else stays.</li>
+          <li><b>Film my part again:</b> re-film it, and keep your CTA, clips, captions and look.</li>
+          <li><b>Keep watching:</b> add more talks after where it ended.</li>
+          <li><b>Do it again</b> or <b>Make a copy</b>: every version is kept.</li>
+        </ul>
+      </div>
+    </article>
+    <article class="nx" id="nx-post">
+      <div class="nx-pic"><img src="/img/sales/new-post.jpg" alt="Your finished RANT with Your Facebook post written under it" loading="lazy"></div>
+      <div>
+        <span class="nx-k"><span class="n">9</span>Your Facebook post, already written</span>
+        <h3>The video is done. The post is too.</h3>
+        <p>A video needs words next to it when you post it.</p>
+        <p class="but">After making the video you're tired, and the post is the part most people skip.</p>
+        <p class="so">The app writes it for you from what you said in your RANT.</p>
+        <ul>
+          <li>A post comes with every RANT.</li>
+          <li>Copy it in one tap.</li>
+          <li>Don't love it? Tap <b>New version</b>.</li>
+          <li>Older posts are kept, right in My RANTs.</li>
+        </ul>
+      </div>
+    </article>
+    <article class="nx" id="nx-batch">
+      <div class="nx-pic"><img src="/img/sales/new-batch.jpg" alt="My RANTs with five RANTs ticked and the Batch render 5 RANTs button" loading="lazy"></div>
+      <div>
+        <span class="nx-k"><span class="n">10</span>Batch render <span class="nx-new">New</span></span>
+        <h3>Film ten RANTs. Tap one button. Walk away.</h3>
+        <p>The fastest way to work is to film many RANTs in one go, then make them all at once.</p>
+        <p class="but">Making them one at a time meant sitting by your phone, waiting for each one to finish.</p>
+        <p class="so">This time, tick them all and let our server do the rest.</p>
+        <ul>
+          <li>In My RANTs, tap <b>Select</b> and tick your RANTs.</li>
+          <li>Tap <b>Batch render</b>. They're made one by one.</li>
+          <li>Close the app. You get a notification as each one is ready.</li>
+          <li>Open the app and they're saved to your Photos.</li>
+        </ul>
+      </div>
+    </article>
+    <div class="nx-end">
+      <b>All of it, on your phone.</b>
+      <p>No computer, no editing app. The ones marked <span class="nx-new" style="margin:0">New</span> come to iPhone in version 1.0.6, which is with Apple right now.</p>
+      <a class="next" href="#get" style="justify-content:center;border:0;margin:0;padding:0"><span class="arr">↓</span>Get it on your phone</a>
     </div>
   </div>
 </section>
