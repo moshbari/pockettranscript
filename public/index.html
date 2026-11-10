@@ -170,6 +170,20 @@ h1{font-size:clamp(36px,6vw,58px);line-height:1.04;letter-spacing:-.035em;margin
 .vframe iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 
 /* NEW in RANT: story cards, picture + words */
+.taps{padding:96px 0;border-top:1px solid var(--line);background:var(--bg)}
+.taps .eyebrow{color:#16a34a}
+.taps h2{font-size:clamp(30px,4.4vw,44px);letter-spacing:-.025em;line-height:1.08;margin:12px 0 14px}
+.taps-box{max-width:760px;margin:22px auto 0}
+.tframe{position:relative;aspect-ratio:16/9;max-width:900px;margin:30px auto 0;border-radius:22px;overflow:hidden;background:#000;border:6px solid #111;box-shadow:0 22px 44px rgba(15,40,80,.22)}
+.tframe iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.tlist{list-style:none;margin:30px auto 0;padding:0;max-width:900px;display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.tlist li{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 14px;box-shadow:var(--shadow);font-size:15px;line-height:1.4}
+.tlist .n{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:14px;background:linear-gradient(120deg,#22c55e,#0ea5e9);margin-bottom:8px}
+.tlist b{display:block;font-size:16px;margin-bottom:2px}
+.tlist span.t{color:var(--muted)}
+.taps-after{max-width:760px;margin:26px auto 0;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px 24px;box-shadow:var(--shadow)}
+.taps-after p{margin:0 0 10px}.taps-after p:last-child{margin:0}
+@media (max-width:900px){ .tlist{grid-template-columns:1fr 1fr} .tlist li:last-child{grid-column:1/-1} }
 .newx{padding:96px 0;border-top:1px solid var(--line);background:linear-gradient(180deg,var(--bg2),var(--bg))}
 .newx .eyebrow{color:#d946ef}
 .newx h2{font-size:clamp(30px,4.4vw,44px);letter-spacing:-.025em;line-height:1.08;margin:12px 0 14px}
@@ -379,6 +393,7 @@ footer a{text-decoration:none;font-weight:600}
       <li><a href="#ch6"><span class="n">6</span>Save it for later</a></li>
       <li><a href="#ch7"><span class="n">7</span>Write it here, see the Community</a></li>
       <li><a href="#ch8"><span class="n">8</span>RANT: talk over any video</a></li>
+      <li><a href="#taps"><span class="n">▶</span>Watch: a RANT in 5 taps</a></li>
       <li><a href="#new"><span class="n">★</span>New in RANT: 10 new things</a></li>
     </ol>
   </nav>
@@ -630,6 +645,41 @@ footer a{text-decoration:none;font-weight:600}
 
     <div class="center" style="margin-top:30px">
       <p class="lead" style="margin:0 0 6px">The whole content system is in your phone. <b>What's stopping you?</b></p>
+      <a class="next" href="#taps" style="justify-content:center;border:0"><span class="arr">↓</span>Not sure what to say? Let the app write it. Watch…</a>
+    </div>
+  </div>
+</section>
+
+<!-- READY-MADE RANT DEMO -->
+<section class="taps" id="taps">
+  <div class="wrap">
+    <div class="center">
+      <span class="eyebrow">Watch it: Ready-made RANT</span>
+      <h2>Five taps of one finger. Then you're on camera.</h2>
+      <p class="lead" style="margin:0">A real video, start to finish, on a phone. The app found the moments, wrote what to say and stopped the video right on time.</p>
+    </div>
+    <div class="taps-box">
+      <p class="but">Talking over a video is the easy part. Knowing <b>what</b> to say, and <b>when</b>, is where most people freeze and give up.</p>
+      <p class="so">Here, Ready-made RANT does that part. You just read.</p>
+    </div>
+
+    <div class="tframe"><iframe src="https://www.tella.tv/video/vid_cmwao26l2008c02mkbik47xi8/embed" title="5 finger taps to RANT with Get Transcript" loading="lazy" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div>
+
+    <ol class="tlist">
+      <li><span class="n">1</span><b>Share</b><span class="t">On the video, tap Share, then Get Transcript. The words come in seconds.</span></li>
+      <li><span class="n">2</span><b>Ready-made RANT</b><span class="t">The easy road. Nearly everything is done for you.</span></li>
+      <li><span class="n">3</span><b>Write my RANTs</b><span class="t">Short scripts, each one placed at the right moment.</span></li>
+      <li><span class="n">4</span><b>Record my RANTs</b><span class="t">Prop your phone up so the camera sees you.</span></li>
+      <li><span class="n">5</span><b>Record</b><span class="t">The video stops on time. Read the teleprompter; it scrolls as you speak.</span></li>
+    </ol>
+
+    <div class="taps-after">
+      <p><b>Then it finishes itself.</b> Your pauses are cut out. Your call to action is already in the script. Tap <b>Make my RANT</b> and it's made on our server, with a Facebook post written to go with it.</p>
+      <p>Want to change something? You can: blur a part, add clips, pick a colour look. You don't have to. And if the post ever fails, copy the ready prompt into ChatGPT.</p>
+    </div>
+
+    <div class="center" style="margin-top:30px">
+      <p class="lead" style="margin:0 0 6px">Five taps, then read. <b>That’s the whole job.</b></p>
       <a class="next" href="#new" style="justify-content:center;border:0"><span class="arr">↓</span>And there's more. Here's what's new in RANT…</a>
     </div>
   </div>
@@ -805,7 +855,7 @@ footer a{text-decoration:none;font-weight:600}
     </article>
     <div class="nx-end">
       <b>All of it, on your phone.</b>
-      <p>No computer, no editing app. The ones marked <span class="nx-new" style="margin:0">New</span> come to iPhone in version 1.0.6, which is with Apple right now.</p>
+      <p>No computer, no editing app. The ones marked <span class="nx-new" style="margin:0">New</span> are in the latest version on iPhone and Android.</p>
       <a class="next" href="#get" style="justify-content:center;border:0;margin:0;padding:0"><span class="arr">↓</span>Get it on your phone</a>
     </div>
   </div>
