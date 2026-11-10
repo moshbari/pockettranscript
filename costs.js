@@ -31,6 +31,9 @@ const PRICES = Object.assign({
   'gpt-6-astra':   { in: 10.00, cached: 1.00, out: 50.00 },
   'gpt-image-2':   { in: 5.00, cached: 1.25, imageIn: 8.00, out: 30.00 },
   'whisper-1':     { perMinute: 0.006 },
+  'gpt-transcribe':         { perMinute: 0.0045 },
+  'gpt-4o-transcribe':      { perMinute: 0.006 },
+  'gpt-4o-mini-transcribe': { perMinute: 0.003 },
   'omni-moderation': { free: true },
 }, safeJson(process.env.PRICES_JSON));
 
@@ -44,6 +47,8 @@ const ACTIVITIES = {
   moderation:         { name: 'Community safety check' },
   screenshots_read:   { name: 'Reading screenshots of text posts' },
   auto_title:         { name: 'Auto titles for saved posts' },
+  rant_dictation:     { name: 'RANT script dictation (mic in the script editor)', note: "YapText's key, not switched · iPhone only (Android can't be told apart yet) · speech part, per minute" },
+  rant_captions:      { name: 'RANT caption word timings', note: "YapText's key, not switched" },
 };
 
 function safeJson(s) { try { return s ? JSON.parse(s) : {}; } catch { return {}; } }
@@ -185,6 +190,19 @@ router.get('/costs/:key', (req, res, next) => {
   const n = [1, 7, 30, 90].includes(Number(req.query.days)) ? Number(req.query.days) : 7;
   res.set('Cache-Control', 'no-store').type('html').send(page(report(n), req.params.key));
 });
+// YapText reports Get Transcript's use of it here (it stays on YapText's key).
+const INGEST_TOKEN = process.env.GT_COST_TOKEN || '';
+const INGESTABLE = new Set(['rant_dictation', 'rant_captions']);
+router.post('/api/costs/ingest', express.json(), (req, res, next) => {
+  const t = String(req.headers['x-cost-token'] || '');
+  if (!INGEST_TOKEN || t !== INGEST_TOKEN) return next();
+  const { activity, model, minutes } = req.body || {};
+  const m = Number(minutes);
+  if (!INGESTABLE.has(activity) || !(m > 0 && m <= 600)) return res.status(400).json({ ok: false });
+  track(activity, { model: String(model || '').slice(0, 60), minutes: m });
+  res.json({ ok: true });
+});
+
 router.get('/api/costs/:key', (req, res, next) => {
   if (!allowed(req)) return next();
   res.set('Cache-Control', 'no-store').json(report(Math.min(400, Math.max(1, Number(req.query.days) || 7))));
