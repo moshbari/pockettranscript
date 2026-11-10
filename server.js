@@ -749,8 +749,14 @@ function finishJob(job, result) {
   save();
 }
 
+// Tells the shared transcriber "bill Get Transcript's own OpenAI key": the tag is
+// a hash of that key, so only this server can make it (10 Nov 2026).
+const GT_TAG = process.env.REPLY_OPENAI_KEY
+  ? require('crypto').createHash('sha256').update(process.env.REPLY_OPENAI_KEY).digest('hex') : '';
+
 async function callTranscriber(pathname, body) {
-  const r = await fetch(TRANSCRIBER_URL + pathname, { method: 'POST', ...body });
+  const headers = { ...(body.headers || {}), ...(GT_TAG && { 'X-GT-Tag': GT_TAG }) };
+  const r = await fetch(TRANSCRIBER_URL + pathname, { method: 'POST', ...body, headers });
   let data = {};
   try { data = await r.json(); } catch { /* not JSON */ }
   if (!r.ok || !data.text) {

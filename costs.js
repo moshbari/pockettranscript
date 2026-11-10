@@ -36,7 +36,7 @@ const PRICES = Object.assign({
 
 // What each activity is called on the page, and who pays for it today.
 const ACTIVITIES = {
-  transcript_whisper: { name: 'Transcripts (Whisper: non-YouTube links, files, caption-less videos)', note: 'Get Transcript key (built-in transcriber since 10 Nov 2026)' },
+  transcript_whisper: { name: 'Transcripts (Whisper: non-YouTube links, files, caption-less videos)', note: 'on the Get Transcript key (shared transcriber, tagged, since 10 Nov 2026)' },
   reply_coach:        { name: 'Reply Coach: new comment' },
   reply_refine:       { name: 'Reply Coach: Shorter / In Bangla / refine' },
   create_text:        { name: 'Make it here: post / thread / comment' },
