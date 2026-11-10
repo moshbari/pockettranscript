@@ -467,9 +467,11 @@ app.delete('/api/jobs/:id', (req, res) => {
 // YouTube falls back to the Mac's extension only if the server can't get it.
 const multer = require('multer');
 const os = require('os');
-// Get Transcript's own transcriber now lives inside this server (./transcriber,
-// 10 Nov 2026). TRANSCRIBER_URL can still point at the old shared one in an emergency.
-const TRANSCRIBER_URL = process.env.TRANSCRIBER_URL || `http://127.0.0.1:${PORT}/transcriber`;
+// Still the shared transcriber (Mosh, 10 Nov 2026: no switch for now). A built-in
+// copy is ready in ./transcriber; to use it set TRANSCRIBER_URL=builtin
+// (tools/move-transcriber-in.sh does that).
+const TRANSCRIBER_URL = process.env.TRANSCRIBER_URL === 'builtin' ? `http://127.0.0.1:${PORT}/transcriber`
+  : (process.env.TRANSCRIBER_URL || 'https://transcriber-production-f2f1.up.railway.app');
 const GRAB_WAIT_MS = 40 * 1000;   // under the ~60s an iPhone Shortcut waits for an answer
 const upload = multer({ dest: os.tmpdir(), limits: { fileSize: 1024 * 1024 * 1024 } });
 

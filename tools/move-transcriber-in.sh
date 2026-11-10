@@ -28,6 +28,7 @@ for k in PROXY_URL HOME_WORKER_TOKEN YTDLP_COOKIES_B64; do
 done
 
 say_ "Deploying Get Transcript with its built-in transcriber (build ~3-5 min)"
+printf builtin | $R variable set TRANSCRIBER_URL --stdin --service "$SVC" --skip-deploys >/dev/null || die "could not switch"
 $R up --service "$SVC" --detach >/dev/null || die "deploy failed to start (the live server is unchanged)"
 new=""
 for i in $(seq 1 60); do
