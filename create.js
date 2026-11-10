@@ -21,6 +21,7 @@
 // People pick a name once; it shows on everything they make.
 
 const express = require('express');
+const { track } = require('./costs');
 const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
@@ -173,7 +174,7 @@ function buildPrompt(c, fresh) {
   return p + `\n\nMy input is below. Use it as-is; don't ask me for it.\n\n${head ? head + '\n\n' : ''}${c.sourceText}`;
 }
 
-async function askModel(prompt) {
+async function askModel(prompt, device = '') {
   const r = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${OPENAI_KEY}` },
@@ -182,6 +183,7 @@ async function askModel(prompt) {
   });
   const data = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(data.error?.message || `OpenAI answered ${r.status}`);
+  track('create_text', { model: data.model || MODEL, usage: data.usage, device });
   try { return JSON.parse(data.choices?.[0]?.message?.content || ''); }
   catch { throw new Error('The AI sent back something unreadable. Please try again.'); }
 }
@@ -196,6 +198,7 @@ async function flagged(text) {
       signal: AbortSignal.timeout(30 * 1000),
     });
     const data = await r.json();
+    if (r.ok) track('moderation', { model: data.model || 'omni-moderation-latest' });
     return !!data.results?.[0]?.flagged;
   } catch {
     return false;   // the check being down shouldn't block anyone
@@ -206,7 +209,7 @@ const allText = (c) => [c.text, ...(c.comments || [])].filter(Boolean).join('\n\
 
 async function write(c, fresh) {
   try {
-    const out = await askModel(buildPrompt(c, fresh));
+    const out = await askModel(buildPrompt(c, fresh), c.owner);
     if (c.kind === 'thread') {
       c.text = String(out.main || '').trim();
       c.comments = (Array.isArray(out.comments) ? out.comments : []).map((s) => String(s || '').trim()).filter(Boolean);
@@ -238,6 +241,7 @@ async function draw(c) {
     });
     const data = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(data.error?.message || `The image maker answered ${r.status}`);
+    track('create_image', { model: IMAGE_MODEL, usage: data.usage, device: c.owner });
     const b64 = data.data?.[0]?.b64_json;
     if (!b64) throw new Error('No image came back. Please try again.');
     fs.mkdirSync(IMAGE_DIR, { recursive: true });

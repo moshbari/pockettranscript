@@ -14,6 +14,7 @@
 // The phone keeps its deviceId in localStorage; that id IS the password.
 
 const express = require('express');
+const { track } = require('./costs');
 const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
@@ -152,6 +153,7 @@ function getDevice(deviceId, { name } = {}) {
     d = { name: name || 'Desktop', lastSeen: 0, jobs: new Map(), waiters: [] };
     devices.set(deviceId, d);
   }
+  d.id = deviceId;   // so a job's costs can be put against its owner
   if (name) d.name = name;
   return d;
 }
@@ -387,6 +389,7 @@ app.post('/api/jobs', (req, res) => {
     createdAt: now(),
     updatedAt: now(),
   };
+  job.dev = d.id;
   d.jobs.set(job.id, job);
   trimJobs(d);
   save();
@@ -683,6 +686,7 @@ function newServerJob(d, fields) {
     createdAt: now(), updatedAt: now(),
     ...fields,
   };
+  job.dev = d.id;
   d.jobs.set(job.id, job);
   trimJobs(d);
   save();
@@ -724,6 +728,9 @@ function stampedText(job) {
 }
 
 function finishJob(job, result) {
+  if (result.text && !result.source && Number(result.duration) > 0) {
+    track('transcript_whisper', { model: 'whisper-1', minutes: Number(result.duration) / 60, device: job.dev });
+  }
   if (result.text && result.text.trim()) {
     job.status = 'done';
     job.tookMs = now() - job.createdAt;
@@ -848,7 +855,7 @@ async function readPostFromLink(url) {
   return { title: title || `Post on ${site}`, text };
 }
 
-async function readScreenshots(images) {
+async function readScreenshots(images, device = '') {
   if (!OCR_KEY) throw new Error('Reading screenshots is not set up on the server yet.');
   const content = [{ type: 'text', text: `These ${images.length} screenshot(s), in order, show one social media post. Write out the post's text exactly as written, in reading order, joining the screenshots into one text without repeating lines that appear on two of them. Keep the original language and spelling; never translate or fix it. Start with the author's name on its own line if it is visible. Leave out the app's own buttons and counts (Like, Comment, Share, reactions, view counts, menus, the keyboard, the status bar). If the post contains a picture, add one line like [Picture: what it shows, and any words in it]. Output only the post.` }];
   for (const url of images) content.push({ type: 'image_url', image_url: { url, detail: 'high' } });
@@ -860,12 +867,13 @@ async function readScreenshots(images) {
   });
   const data = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(data.error?.message || `The picture reader answered ${r.status}`);
+  track('screenshots_read', { model: data.model || OCR_MODEL, usage: data.usage, device });
   return String(data.choices?.[0]?.message?.content || '').trim();
 }
 
 async function runScreenshots(job, images) {
   try {
-    const text = await readScreenshots(images);
+    const text = await readScreenshots(images, job.dev);
     finishJob(job, text ? { text, segments: [] } : { error: "I couldn't find any words in those screenshots." });
   } catch (e) {
     finishJob(job, { error: e.message });
@@ -935,6 +943,9 @@ async function runYouTube(job, d, { anon }) {
   }
 
   if (result.text && result.text.trim()) {
+    if (!result.source && Number(result.duration) > 0) {
+      track('transcript_whisper', { model: 'whisper-1', minutes: Number(result.duration) / 60, device: job.dev });
+    }
     const segs = Array.isArray(result.segments) ? result.segments : [];
     job.status = 'done';
     job.tookMs = now() - job.createdAt;
@@ -1310,6 +1321,7 @@ async function aiTitle(words) {
     });
     const data = await r.json().catch(() => ({}));
     if (!r.ok) return '';
+    track('auto_title', { model: data.model || OCR_MODEL, usage: data.usage });
     const t = squash(String(data.choices?.[0]?.message?.content || '')).replace(/^["“'`]+|["”'`.]+$/g, '');
     return t.length >= 3 && t.length <= 90 ? t : '';
   } catch { return ''; }
@@ -1613,6 +1625,7 @@ app.get('/get-transcript.shortcut', (_req, res) => {
 });
 
 // Private for now: answers only to REPLY_KEY, falls through otherwise.
+app.use(require('./costs').router);
 app.use(require('./reply'));
 app.use(require('./create'));
 

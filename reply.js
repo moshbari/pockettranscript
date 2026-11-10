@@ -14,6 +14,7 @@ const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 const { openingHint } = require('./openings');
+const { track } = require('./costs');
 
 const KEY = process.env.REPLY_KEY || '';
 // A short password Mosh can type once per device at /coach (the page then
@@ -103,7 +104,7 @@ function useOne() {
   return true;
 }
 
-async function askModel(messages) {
+async function askModel(messages, activity = 'reply_coach') {
   const r = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${OPENAI_KEY}` },
@@ -112,6 +113,7 @@ async function askModel(messages) {
   });
   const data = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(data.error?.message || `OpenAI answered ${r.status}`);
+  track(activity, { model: data.model || MODEL, usage: data.usage });
   const text = data.choices?.[0]?.message?.content || '';
   let out;
   try { out = JSON.parse(text); } catch { throw new Error('The AI sent back something unreadable. Please try again.'); }
@@ -208,7 +210,7 @@ router.post('/api/reply/:key/refine', async (req, res) => {
 
   const messages = [...chat.messages, { role: 'user', content: ask }];
   try {
-    const { text, out } = await askModel(messages);
+    const { text, out } = await askModel(messages, 'reply_refine');
     messages.push({ role: 'assistant', content: text });
     chat.messages = messages;
     chat.at = Date.now();
