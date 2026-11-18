@@ -611,7 +611,20 @@ const DEFAULTS = PACKS.uom;
 // still matches one of them word for word (never edited) gets the new words.
 function refreshPackCopies() {
   const old = JSON.parse(fs.readFileSync(path.join(__dirname, 'packs-uom-old.json'), 'utf8'));
+  // packs-uom-moves.json: pack prompts that were renamed (a saved copy takes the
+  // new name, so it stays in its top spot instead of showing twice) or removed
+  // (a never-edited copy goes too; an edited one stays, it's theirs now).
+  const moves = JSON.parse(fs.readFileSync(path.join(__dirname, 'packs-uom-moves.json'), 'utf8'));
   let n = 0;
+  for (const [owner, list] of userPrompts) {
+    const keep = list.filter((p) => moves.removed[p.name] !== p.text);
+    const names = new Set(keep.map((p) => p.name));
+    for (const p of keep) {
+      const to = moves.renamed[p.name];
+      if (to && !names.has(to)) { names.delete(p.name); names.add(to); p.name = to; n++; }
+    }
+    if (keep.length !== list.length) { n += list.length - keep.length; userPrompts.set(owner, keep); }
+  }
   for (const list of userPrompts.values()) {
     for (const p of list) {
       const now = DEFAULTS.find((d) => d.name === p.name);
